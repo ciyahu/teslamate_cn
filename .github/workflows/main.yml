@@ -19,7 +19,6 @@ jobs:
           - platform: linux/amd64
             runs_on: ubuntu-latest
           - platform: linux/arm64
-            # 使用原生 ARM 运行器解决编译失败问题
             runs_on: ubuntu-24.04-arm
     
     steps:
@@ -43,8 +42,8 @@ jobs:
           context: .
           file: ./Dockerfile
           platforms: ${{ matrix.platform }}
-          # 推送摘要而非标签，这是多平台合并的标准做法
-          outputs: type=image,name=${{ env.REGISTRY }}/${ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
+          # 修正了下方的变量引用语法 ${{ ... }}
+          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -55,7 +54,6 @@ jobs:
           touch "/tmp/digests/${digest#sha256:}"
 
       - name: Upload digest
-        # 修正此处：全称应为 upload-artifact
         uses: actions/upload-artifact@v4
         with:
           name: digests-${{ strategy.job-index }}
