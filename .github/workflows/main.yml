@@ -7,6 +7,7 @@ env:
   REGISTRY: crpi-imfm7cwd6erou87s.cn-hangzhou.personal.cr.aliyuncs.com
   IMAGE_NAME: ciyahu/can
   TAG: teslamate-latest
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
@@ -18,7 +19,7 @@ jobs:
           - platform: linux/amd64
             runs_on: ubuntu-latest
           - platform: linux/arm64
-            # 使用 GitHub 托管的原生 ARM 运行器，大幅提升编译成功率
+            # 使用原生 ARM 运行器解决编译失败问题
             runs_on: ubuntu-24.04-arm
     
     steps:
@@ -42,8 +43,8 @@ jobs:
           context: .
           file: ./Dockerfile
           platforms: ${{ matrix.platform }}
-          # 关键：不直接推 Tag，而是推送到 Registry 并生成 Digest
-          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
+          # 推送摘要而非标签，这是多平台合并的标准做法
+          outputs: type=image,name=${{ env.REGISTRY }}/${ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -54,7 +55,8 @@ jobs:
           touch "/tmp/digests/${digest#sha256:}"
 
       - name: Upload digest
-        uses: actions/artifact@v4
+        # 修正此处：全称应为 upload-artifact
+        uses: actions/upload-artifact@v4
         with:
           name: digests-${{ strategy.job-index }}
           path: /tmp/digests/*
