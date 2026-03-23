@@ -138,6 +138,109 @@ const DirectionArrow = CircleMarker.extend({
   },
 });
 
+const PI = 3.1415926535897932384626;
+const A = 6378245.0;
+const EE = 0.00669342162296594323;
+
+function outOfChina(lat, lng) {
+  return lng < 72.004 || lng > 137.8347 || lat < 0.8293 || lat > 55.8271;
+}
+
+function transformLat(x, y) {
+  let ret =
+    -100.0 +
+    2.0 * x +
+    3.0 * y +
+    0.2 * y * y +
+    0.1 * x * y +
+    0.2 * Math.sqrt(Math.abs(x));
+  ret +=
+    ((20.0 * Math.sin(6.0 * x * PI) + 20.0 * Math.sin(2.0 * x * PI)) * 2.0) /
+    3.0;
+  ret +=
+    ((20.0 * Math.sin(y * PI) + 40.0 * Math.sin((y / 3.0) * PI)) * 2.0) /
+    3.0;
+  ret +=
+    ((160.0 * Math.sin((y / 12.0) * PI) +
+      320.0 * Math.sin((y * PI) / 30.0)) *
+      2.0) /
+    3.0;
+  return ret;
+}
+
+function transformLon(x, y) {
+  let ret =
+    300.0 +
+    x +
+    2.0 * y +
+    0.1 * x * x +
+    0.1 * x * y +
+    0.1 * Math.sqrt(Math.abs(x));
+  ret +=
+    ((20.0 * Math.sin(6.0 * x * PI) + 20.0 * Math.sin(2.0 * x * PI)) * 2.0) /
+    3.0;
+  ret +=
+    ((20.0 * Math.sin(x * PI) + 40.0 * Math.sin((x / 3.0) * PI)) * 2.0) /
+    3.0;
+  ret +=
+    ((150.0 * Math.sin((x / 12.0) * PI) +
+      300.0 * Math.sin((x / 30.0) * PI)) *
+      2.0) /
+    3.0;
+  return ret;
+}
+
+function wgs84ToGcj02(lat, lng) {
+  lat = Number.parseFloat(lat);
+  lng = Number.parseFloat(lng);
+
+  if (outOfChina(lat, lng)) {
+    return { lat, lng };
+  }
+
+  const dLat = transformLat(lng - 105.0, lat - 35.0);
+  const dLon = transformLon(lng - 105.0, lat - 35.0);
+  const radLat = (lat * PI) / 180.0;
+  let magic = Math.sin(radLat);
+  magic = 1 - EE * magic * magic;
+  const sqrtMagic = Math.sqrt(magic);
+
+  const adjustedLat =
+    (dLat * 180.0) / (((A * (1 - EE)) / (magic * sqrtMagic)) * PI);
+  const adjustedLon =
+    (dLon * 180.0) / ((A / sqrtMagic) * Math.cos(radLat) * PI);
+
+  return {
+    lat: lat + adjustedLat,
+    lng: lng + adjustedLon,
+  };
+}
+
+function gcj02ToWgs84(lat, lng) {
+  lat = Number.parseFloat(lat);
+  lng = Number.parseFloat(lng);
+
+  if (outOfChina(lat, lng)) {
+    return { lat, lng };
+  }
+
+  const { lat: gcjLat, lng: gcjLng } = wgs84ToGcj02(lat, lng);
+
+  return {
+    lat: lat * 2 - gcjLat,
+    lng: lng * 2 - gcjLng,
+  };
+}
+
+function toLatLng(lat, lng) {
+  return new LatLng(Number.parseFloat(lat), Number.parseFloat(lng));
+}
+
+function toGcjLatLng(lat, lng) {
+  const coords = wgs84ToGcj02(lat, lng);
+  return toLatLng(coords.lat, coords.lng);
+}
+
 function createMap(opts) {
   const map = new M(opts.elId != null ? `map_${opts.elId}` : "map", opts);
 
@@ -145,21 +248,16 @@ function createMap(opts) {
   const isDarkMode =
     document.documentElement.getAttribute("data-theme") === "dark";
 
-  const osm = new TileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    className: isDarkMode ? "dark-mode-tiles" : "",
-  });
+  const gaode = new TileLayer(
+    "https://wprd0{s}.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=1&x={x}&y={y}&z={z}",
+    {
+      maxZoom: 19,
+      subdomains: ["1", "2", "3", "4"],
+      className: isDarkMode ? "dark-mode-tiles" : "",
+    },
+  );
 
-  if (opts.enableHybridLayer) {
-    const hybrid = new TileLayer(
-      "http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}",
-      { maxZoom: 20, subdomains: ["mt0", "mt1", "mt2", "mt3"] },
-    );
-
-    new Control.Layers({ OSM: osm, Hybrid: hybrid }).addTo(map);
-  }
-
-  map.addLayer(osm);
+  map.addLayer(gaode);
 
   return map;
 }
@@ -181,7 +279,11 @@ export const SimpleMap = {
     });
 
     const isArrow = this.el.dataset.marker === "arrow";
-    const [lat, lng, heading] = $position.value.split(",");
+    const [rawLat, rawLng, heading] = $position.value.split(",");
+    const { lat, lng } = wgs84ToGcj02(
+      Number.parseFloat(rawLat),
+      Number.parseFloat(rawLng),
+    );
 
     const marker = isArrow
       ? new DirectionArrow([lat, lng], heading)
@@ -201,7 +303,11 @@ export const SimpleMap = {
 
     if (isArrow) {
       const setView = () => {
-        const [lat, lng, heading] = $position.value.split(",");
+        const [rawLat, rawLng, heading] = $position.value.split(",");
+        const { lat, lng } = wgs84ToGcj02(
+          Number.parseFloat(rawLat),
+          Number.parseFloat(rawLng),
+        );
         marker.setHeading(heading);
         marker.setLatLng([lat, lng]);
         map.setView([lat, lng], map.getZoom());
@@ -230,7 +336,7 @@ export const Map = {
     const $latitude = geoFence("latitude");
     const $longitude = geoFence("longitude");
 
-    const location = new LatLng($latitude.value, $longitude.value);
+    const location = toGcjLatLng($latitude.value, $longitude.value);
 
     const controlOpts = {
       position: "topleft",
@@ -249,7 +355,7 @@ export const Map = {
       preventMarkerRemoval: true,
     };
 
-    const map = createMap({ enableHybridLayer: true });
+    const map = createMap({});
     map.setView(location, 17, { animate: false });
     map.pm.setLang(LANG);
     map.pm.addControls(controlOpts);
@@ -260,10 +366,11 @@ export const Map = {
       .on("pm:edit", (e) => {
         const { lat, lng } = e.target.getLatLng();
         const radius = Math.round(e.target.getRadius());
+        const { lat: wgsLat, lng: wgsLng } = gcj02ToWgs84(lat, lng);
 
         $radius.value = radius;
-        $latitude.value = lat;
-        $longitude.value = lng;
+        $latitude.value = wgsLat;
+        $longitude.value = wgsLng;
 
         const mBox = map.getBounds();
         const cBox = circle.getBounds();
@@ -274,15 +381,16 @@ export const Map = {
     new Control.geocoder({ defaultMarkGeocode: false })
       .on("markgeocode", (e) => {
         const { bbox, center } = e.geocode;
+        const gcjCenter = toGcjLatLng(center.lat, center.lng);
 
         const poly = L.polygon([
-          bbox.getSouthEast(),
-          bbox.getNorthEast(),
-          bbox.getNorthWest(),
-          bbox.getSouthWest(),
+          toGcjLatLng(bbox.getSouthEast().lat, bbox.getSouthEast().lng),
+          toGcjLatLng(bbox.getNorthEast().lat, bbox.getNorthEast().lng),
+          toGcjLatLng(bbox.getNorthWest().lat, bbox.getNorthWest().lng),
+          toGcjLatLng(bbox.getSouthWest().lat, bbox.getSouthWest().lng),
         ]);
 
-        circle.setLatLng(center);
+        circle.setLatLng(gcjCenter);
 
         const lBox = poly.getBounds();
         const cBox = circle.getBounds();
@@ -291,9 +399,8 @@ export const Map = {
         map.fitBounds(bounds);
         map.pm.enableGlobalEditMode();
 
-        const { lat, lng } = center;
-        $latitude.value = lat;
-        $longitude.value = lng;
+        $latitude.value = center.lat;
+        $longitude.value = center.lng;
       })
       .addTo(map);
 
