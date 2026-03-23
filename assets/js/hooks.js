@@ -265,17 +265,18 @@ function createMap(opts) {
 export const SimpleMap = {
   mounted() {
     const $position = document.querySelector(`#position_${this.el.dataset.id}`);
+    const initialZoom = Number.parseInt(this.el.dataset.initialZoom ?? "15", 10);
 
     const map = createMap({
       elId: this.el.dataset.id,
       zoomControl: !!this.el.dataset.zoom,
       boxZoom: false,
-      doubleClickZoom: false,
+      doubleClickZoom: true,
       keyboard: false,
       scrollWheelZoom: false,
-      tap: false,
-      dragging: false,
-      touchZoom: false,
+      tap: true,
+      dragging: true,
+      touchZoom: true,
     });
 
     const isArrow = this.el.dataset.marker === "arrow";
@@ -289,7 +290,7 @@ export const SimpleMap = {
       ? new DirectionArrow([lat, lng], heading)
       : new Marker([lat, lng], { icon });
 
-    map.setView([lat, lng], 17);
+    map.setView([lat, lng], initialZoom);
     marker.addTo(map);
 
     map.removeControl(map.zoomControl);
