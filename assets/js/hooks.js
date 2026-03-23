@@ -248,16 +248,17 @@ function createMap(opts) {
   const isDarkMode =
     document.documentElement.getAttribute("data-theme") === "dark";
 
-  const gaode = new TileLayer(
-    "https://wprd0{s}.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=1&x={x}&y={y}&z={z}",
+  const tencent = new TileLayer(
+    "https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={-y}&type=vector&styleid=0",
     {
       maxZoom: 19,
-      subdomains: ["1", "2", "3", "4"],
+      subdomains: ["0", "1", "2", "3"],
+      tms: true,
       className: isDarkMode ? "dark-mode-tiles" : "",
     },
   );
 
-  map.addLayer(gaode);
+  map.addLayer(tencent);
 
   return map;
 }

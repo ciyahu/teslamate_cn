@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>瓦片地图测试 - 阜阳市百货大楼 z=15</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+h1 { font-size: 18px; }
+h2 { font-size: 16px; margin-top: 30px; border-bottom: 2px solid #333; padding-bottom: 6px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, 300px); gap: 20px; }
+.card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 12px; }
+.card h3 { font-size: 14px; margin: 0 0 4px; }
+.card p { font-size: 11px; color: #666; margin: 0 0 8px; word-break: break-all; }
+.card img { width: 256px; height: 256px; border: 1px solid #eee; display: block; }
+</style>
+</head>
+<body>
+<h1>瓦片地图测试 - 阜阳市百货大楼 (z=15, x=26924, y_std=13207, y_tencent=19560)</h1>
+
+<h2>高德 - 矢量路网 style=7</h2>
+<div class="grid">
+  <div class="card">
+    <h3>1. style=7 scl=1 size=1 (当前使用)</h3>
+    <p>含标注，标准256px</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=1&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>2. style=7 scl=2 size=1</h3>
+    <p>纯底图无标注</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=2&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>3. style=7 scl=1 size=2</h3>
+    <p>含标注，512px大图</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=2&style=7&scl=1&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>4. style=7 scl=2 size=2</h3>
+    <p>纯底图，512px大图</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=2&style=7&scl=2&x=26924&y=13207&z=15" />
+  </div>
+</div>
+
+<h2>高德 - 矢量路网 style=7 + ltype 变体</h2>
+<div class="grid">
+  <div class="card">
+    <h3>5. scl=2 ltype=1</h3>
+    <p>要素控制 ltype=1</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=2&ltype=1&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>6. scl=2 ltype=2</h3>
+    <p>要素控制 ltype=2</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=2&ltype=2&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>7. scl=2 ltype=3</h3>
+    <p>要素控制 ltype=3</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=2&ltype=3&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>8. scl=2 ltype=4</h3>
+    <p>要素控制 ltype=4</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=2&ltype=4&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>9. scl=2 ltype=5</h3>
+    <p>要素控制 ltype=5</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=2&ltype=5&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>10. scl=2 ltype=6</h3>
+    <p>要素控制 ltype=6</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=2&ltype=6&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>11. scl=2 ltype=7</h3>
+    <p>要素控制 ltype=7</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=2&ltype=7&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>12. scl=2 ltype=8</h3>
+    <p>要素控制 ltype=8</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=2&ltype=8&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>13. scl=2 ltype=9</h3>
+    <p>要素控制 ltype=9</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=2&ltype=9&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>14. scl=2 ltype=10</h3>
+    <p>要素控制 ltype=10</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=2&ltype=10&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>15. scl=2 ltype=11</h3>
+    <p>要素控制 ltype=11</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=2&ltype=11&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>16. scl=1 ltype=4</h3>
+    <p>含标注 + ltype=4</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=1&ltype=4&x=26924&y=13207&z=15" />
+  </div>
+</div>
+
+<h2>高德 - 卫星/影像</h2>
+<div class="grid">
+  <div class="card">
+    <h3>17. style=6 卫星图</h3>
+    <p>纯卫星影像</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=6&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>18. style=8 卫星+路网</h3>
+    <p>卫星影像叠加路网标注</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=8&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>19. style=6 scl=2</h3>
+    <p>卫星 scl=2</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=6&scl=2&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>20. style=8 scl=2</h3>
+    <p>卫星路网 scl=2</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=8&scl=2&x=26924&y=13207&z=15" />
+  </div>
+</div>
+
+<h2>高德 - style=9/10 (未知类型)</h2>
+<div class="grid">
+  <div class="card">
+    <h3>21. style=9 scl=1</h3>
+    <p>style=9</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=9&scl=1&x=26924&y=13207&z=15" />
+  </div>
+  <div class="card">
+    <h3>22. style=10 scl=1</h3>
+    <p>style=10</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=10&scl=1&x=26924&y=13207&z=15" />
+  </div>
+</div>
+
+<h2>高德 - 英文</h2>
+<div class="grid">
+  <div class="card">
+    <h3>23. style=7 scl=1 lang=en</h3>
+    <p>英文标注</p>
+    <img src="https://wprd01.is.autonavi.com/appmaptile?lang=en&size=1&style=7&scl=1&x=26924&y=13207&z=15" />
+  </div>
+</div>
+
+<h2>腾讯地图</h2>
+<div class="grid">
+  <div class="card">
+    <h3>24. 腾讯 tile 接口</h3>
+    <p>rt0.map.gtimg.com/tile</p>
+    <img src="https://rt0.map.gtimg.com/tile?z=15&x=26924&y=19560&type=vector&styleid=0" />
+  </div>
+  <div class="card">
+    <h3>25. 腾讯 realtimerender rt0</h3>
+    <p>rt0.map.gtimg.com/realtimerender</p>
+    <img src="https://rt0.map.gtimg.com/realtimerender?z=15&x=26924&y=19560&type=vector&style=0" />
+  </div>
+  <div class="card">
+    <h3>26. 腾讯 realtimerender rt1</h3>
+    <p>rt1.map.gtimg.com/realtimerender</p>
+    <img src="https://rt1.map.gtimg.com/realtimerender?z=15&x=26924&y=19560&type=vector&style=0" />
+  </div>
+  <div class="card">
+    <h3>27. 腾讯 p3 瓦片</h3>
+    <p>p3.map.gtimg.com/maptilesv3</p>
+    <img src="https://p3.map.gtimg.com/maptilesv3/15/104/107/26924/19560?version=400" />
+  </div>
+</div>
+
+<h2>OpenStreetMap</h2>
+<div class="grid">
+  <div class="card">
+    <h3>28. OSM 标准</h3>
+    <p>tile.openstreetmap.org</p>
+    <img src="https://tile.openstreetmap.org/15/26924/13207.png" />
+  </div>
+</div>
+
+</body>
+</html>

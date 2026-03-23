@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>地图对比 - 阜阳市人民路</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: Arial, sans-serif; background: #1a1a2e; color: #fff; }
+.header { padding: 10px 20px; background: #16213e; display: flex; align-items: center; gap: 20px; }
+.header h1 { font-size: 16px; font-weight: normal; }
+.container { display: flex; height: calc(100vh - 42px); }
+.map-wrapper { flex: 1; position: relative; border: 1px solid #333; }
+.map-wrapper .label {
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  z-index: 1000; background: rgba(0,0,0,0.7); color: #fff;
+  padding: 4px 12px; border-radius: 4px; font-size: 13px; white-space: nowrap;
+}
+.map { width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>TeslaMate 地图瓦片对比 - 阜阳市人民路</h1>
+</div>
+
+<div class="container">
+  <div class="map-wrapper">
+    <div class="label">21. 高德 style=9 scl=1</div>
+    <div id="map1" class="map"></div>
+  </div>
+  <div class="map-wrapper">
+    <div class="label">24. 腾讯 tile 接口</div>
+    <div id="map2" class="map"></div>
+  </div>
+</div>
+
+<script>
+// 阜阳市人民路 (GCJ-02 坐标)
+const center = [32.8908, 115.8140];
+const defaultZoom = 15;
+
+// 地图1: 高德 style=9 scl=1
+const map1 = L.map('map1', {
+  center: center,
+  zoom: defaultZoom,
+  scrollWheelZoom: true,
+  zoomControl: true,
+});
+
+L.tileLayer(
+  'https://wprd0{s}.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=9&scl=1&x={x}&y={y}&z={z}',
+  {
+    maxZoom: 19,
+    subdomains: ['1', '2', '3', '4'],
+    attribution: '高德 style=9',
+  }
+).addTo(map1);
+
+L.marker(center).addTo(map1).bindPopup('阜阳市人民路').openPopup();
+
+// 地图2: 腾讯 tile 接口
+const map2 = L.map('map2', {
+  center: center,
+  zoom: defaultZoom,
+  scrollWheelZoom: true,
+  zoomControl: true,
+});
+
+L.tileLayer(
+  'https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={-y}&type=vector&styleid=0',
+  {
+    maxZoom: 19,
+    subdomains: ['0', '1', '2', '3'],
+    tms: true,
+    attribution: '腾讯地图',
+  }
+).addTo(map2);
+
+L.marker(center).addTo(map2).bindPopup('阜阳市人民路').openPopup();
+
+// 同步两个地图的缩放和平移
+let syncing = false;
+
+function syncMap(source, target) {
+  source.on('moveend zoomend', function () {
+    if (syncing) return;
+    syncing = true;
+    target.setView(source.getCenter(), source.getZoom(), { animate: false });
+    syncing = false;
+  });
+}
+
+syncMap(map1, map2);
+syncMap(map2, map1);
+</script>
+
+</body>
+</html>
