@@ -1,17 +1,29 @@
-name: Manual Build And Push Teslamate
+name: Official Style Multi-arch Push
 
 on:
   workflow_dispatch:
 
-jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+env:
+  REGISTRY: crpi-imfm7cwd6erou87s.cn-hangzhou.personal.cr.aliyuncs.com
+  IMAGE_NAME: ciyahu/can
+  TAG: teslamate-latest
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+jobs:
+  build:
+    runs-on: ${{ matrix.runs_on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runs_on: ubuntu-latest
+          - platform: linux/arm64
+            # 使用 GitHub 托管的原生 ARM 运行器，大幅提升编译成功率
+            runs_on: ubuntu-24.04-arm
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -19,17 +31,59 @@ jobs:
       - name: Login to Aliyun ACR
         uses: docker/login-action@v3
         with:
-          registry: crpi-imfm7cwd6erou87s.cn-hangzhou.personal.cr.aliyuncs.com
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.ALIYUN_USERNAME }}
           password: ${{ secrets.ALIYUN_PASSWORD }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v5
+      - name: Build by digest
+        id: build
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: crpi-imfm7cwd6erou87s.cn-hangzhou.personal.cr.aliyuncs.com/ciyahu/can:teslamate-latest
+          platforms: ${{ matrix.platform }}
+          # 关键：不直接推 Tag，而是推送到 Registry 并生成 Digest
+          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/artifact@v4
+        with:
+          name: digests-${{ strategy.job-index }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Aliyun ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.ALIYUN_USERNAME }}
+          password: ${{ secrets.ALIYUN_PASSWORD }}
+
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }} \
+            $(printf '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@sha256:%s ' *)
