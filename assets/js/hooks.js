@@ -267,40 +267,52 @@ export const SimpleMap = {
   mounted() {
     const $position = document.querySelector(`#position_${this.el.dataset.id}`);
     const initialZoom = Number.parseInt(this.el.dataset.initialZoom ?? "15", 10);
-
-    const map = createMap({
-      elId: this.el.dataset.id,
-      zoomControl: !!this.el.dataset.zoom,
-      boxZoom: false,
-      doubleClickZoom: true,
-      keyboard: false,
-      scrollWheelZoom: true,
-      tap: true,
-      dragging: true,
-      touchZoom: true,
-    });
-
+    const containerId = `map_${this.el.dataset.id}`;
     const isArrow = this.el.dataset.marker === "arrow";
+
     const [rawLat, rawLng, heading] = $position.value.split(",");
     const { lat, lng } = wgs84ToGcj02(
       Number.parseFloat(rawLat),
       Number.parseFloat(rawLng),
     );
+    const center = new TMap.LatLng(lat, lng);
 
-    const marker = isArrow
-      ? new DirectionArrow([lat, lng], heading)
-      : new Marker([lat, lng], { icon });
-
-    map.setView([lat, lng], initialZoom);
-    marker.addTo(map);
-
-    map.removeControl(map.zoomControl);
-
-    map.on("mouseover", function (e) {
-      map.addControl(map.zoomControl);
+    const map = new TMap.Map(containerId, {
+      center: center,
+      zoom: initialZoom,
+      baseMap: { type: "vector" },
+      control: {
+        zoom: { position: TMap.constants.CONTROL_POSITION.BOTTOM_RIGHT },
+        rotate: { position: TMap.constants.CONTROL_POSITION.BOTTOM_RIGHT },
+      },
     });
-    map.on("mouseout", function (e) {
-      map.removeControl(map.zoomControl);
+
+    const markerStyles = {
+      default: new TMap.MarkerStyle({
+        width: 25,
+        height: 41,
+        anchor: { x: 12, y: 41 },
+      }),
+      arrow: new TMap.MarkerStyle({
+        width: 16,
+        height: 16,
+        anchor: { x: 8, y: 8 },
+        src: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="-6 -6 12 12">' +
+          '<path d="M0,-5 L-4,5 L0,3 L4,5 Z" fill="#3388ff" stroke="#fff" stroke-width="1"/></svg>'
+        ),
+      }),
+    };
+
+    const marker = new TMap.MultiMarker({
+      map: map,
+      styles: markerStyles,
+      geometries: [{
+        id: "pos",
+        styleId: isArrow ? "arrow" : "default",
+        position: center,
+        properties: { rotate: isArrow ? (Number.parseFloat(heading) || 0) : 0 },
+      }],
     });
 
     if (isArrow) {
@@ -310,9 +322,14 @@ export const SimpleMap = {
           Number.parseFloat(rawLat),
           Number.parseFloat(rawLng),
         );
-        marker.setHeading(heading);
-        marker.setLatLng([lat, lng]);
-        map.setView([lat, lng], map.getZoom());
+        const newPos = new TMap.LatLng(lat, lng);
+        marker.updateGeometries([{
+          id: "pos",
+          styleId: "arrow",
+          position: newPos,
+          properties: { rotate: Number.parseFloat(heading) || 0 },
+        }]);
+        map.setCenter(newPos);
       };
 
       $position.addEventListener("change", setView);
