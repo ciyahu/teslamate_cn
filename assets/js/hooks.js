@@ -294,11 +294,12 @@ export const SimpleMap = {
         anchor: { x: 12, y: 41 },
       }),
       arrow: new TMap.MarkerStyle({
-        width: 16,
-        height: 16,
-        anchor: { x: 8, y: 8 },
+        width: 20,
+        height: 20,
+        anchor: { x: 10, y: 10 },
+        faceTo: "map",
         src: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
-          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="-6 -6 12 12">' +
+          '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="-6 -6 12 12">' +
           '<path d="M0,-5 L-4,5 L0,3 L4,5 Z" fill="#3388ff" stroke="#fff" stroke-width="1"/></svg>'
         ),
       }),
@@ -311,7 +312,7 @@ export const SimpleMap = {
         id: "pos",
         styleId: isArrow ? "arrow" : "default",
         position: center,
-        properties: { rotate: isArrow ? (Number.parseFloat(heading) || 0) : 0 },
+        rotation: isArrow ? (Number.parseFloat(heading) || 0) : 0,
       }],
     });
 
@@ -327,7 +328,7 @@ export const SimpleMap = {
           id: "pos",
           styleId: "arrow",
           position: newPos,
-          properties: { rotate: Number.parseFloat(heading) || 0 },
+          rotation: Number.parseFloat(heading) || 0,
         }]);
         map.setCenter(newPos);
       };
