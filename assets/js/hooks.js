@@ -273,7 +273,7 @@ export const SimpleMap = {
       boxZoom: false,
       doubleClickZoom: true,
       keyboard: false,
-      scrollWheelZoom: false,
+      scrollWheelZoom: true,
       tap: true,
       dragging: true,
       touchZoom: true,
