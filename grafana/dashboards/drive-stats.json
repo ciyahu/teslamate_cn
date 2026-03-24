@@ -20,21 +20,41 @@
   "graphTooltip": 0,
   "links": [
     {
-      "icon": "dashboard",
-      "tags": [],
-      "title": "TeslaMate",
-      "tooltip": "",
-      "type": "link",
-      "url": "${base_url:raw}"
+      "asDropdown": true,
+      "icon": "external link",
+      "tags": [
+        "tesla2"
+      ],
+      "title": "车辆信息",
+      "type": "dashboards"
     },
     {
       "asDropdown": true,
       "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
       "tags": [
-        "tesla"
+        "battery"
       ],
-      "title": "Dashboards",
-      "type": "dashboards"
+      "targetBlank": false,
+      "title": "电池",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    },
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [
+        "trip"
+      ],
+      "targetBlank": false,
+      "title": "行驶",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
     }
   ],
   "panels": [
@@ -50,8 +70,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "semi-dark-blue",
-                "value": 0
+                "color": "semi-dark-blue"
               }
             ]
           },
@@ -89,7 +108,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -99,7 +118,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "WITH since as (\n\tSELECT timezone('UTC', min(start_date)) as date FROM drives\n\tWHERE car_id = $car_id\n\tGROUP BY car_id\n),\n\nactual AS (\n\tSELECT\n\t\tdate_trunc('day', timezone('UTC', start_date), '$__timezone') AS date,\n\t\tcount(*) AS number_of_drives\n\tFROM drives\n\tWHERE car_id = $car_id and $__timeFilter(start_date) and end_date is not null\n\tGROUP BY 1\n),\n\nbase_line AS (\n\tSELECT date from generate_series(date_trunc('day', (select date from since), '$__timezone'), date_trunc('day', timestamp with time zone $__timeTo(), '$__timezone'), '1 day'::interval, '$__timezone') date\n)\n\nSELECT\n  base_line.date as time,\n\tCOALESCE(actual.number_of_drives, 0) as number_of_drives\nFROM base_line\nLEFT JOIN actual ON actual.date = base_line.date\nWHERE date_trunc('day', timestamp with time zone $__timeFrom(), '$__timezone') <= base_line.date\norder by base_line.date\n",
+          "rawSql": "WITH since as (\n\tSELECT timezone('UTC', min(start_date)) as date FROM drives\n\tWHERE car_id::text = ANY(string_to_array('${car_id:csv}', ','))\n\tGROUP BY car_id\n),\n\nactual AS (\n\tSELECT\n\t\tdate_trunc('day', timezone('UTC', start_date), '$__timezone') AS date,\n\t\tcount(*) AS number_of_drives\n\tFROM drives\n\tWHERE car_id::text = ANY(string_to_array('${car_id:csv}', ',')) and $__timeFilter(start_date) and end_date is not null\n\tGROUP BY 1\n),\n\nbase_line AS (\n\tSELECT date from generate_series(date_trunc('day', (select date from since), '$__timezone'), date_trunc('day', timestamp with time zone $__timeTo(), '$__timezone'), '1 day'::interval, '$__timezone') date\n)\n\nSELECT\n  base_line.date as time,\n\tCOALESCE(actual.number_of_drives, 0) as number_of_drives\nFROM base_line\nLEFT JOIN actual ON actual.date = base_line.date\nWHERE date_trunc('day', timestamp with time zone $__timeFrom(), '$__timezone') <= base_line.date\norder by base_line.date\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -120,7 +139,7 @@
           }
         }
       ],
-      "title": "# of Drives",
+      "title": "行程次数",
       "type": "stat"
     },
     {
@@ -135,8 +154,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               }
             ]
           },
@@ -199,7 +217,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -209,7 +227,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "WITH since as (\n\tSELECT timezone('UTC', min(start_date)) as date FROM drives\n\tWHERE car_id = $car_id\n\tGROUP BY car_id\n),\n\nactual AS (\n\tSELECT\n\t\tdate_trunc('day', timezone('UTC', start_date), '$__timezone') AS date,\n\t\tsum(distance) AS distance\n\tFROM drives\n\tWHERE car_id = $car_id and $__timeFilter(start_date) and end_date is not null\n\tGROUP BY 1\n),\n\nbase_line AS (\n\tSELECT date from generate_series(date_trunc('day', (select date from since), '$__timezone'), date_trunc('day', timestamp with time zone $__timeTo(), '$__timezone'), '1 day'::interval, '$__timezone') date)\n\nSELECT\n  base_line.date as time,\n\tconvert_km(COALESCE(actual.distance, 0)::numeric, '$length_unit') as \"distance_$length_unit\"\nFROM base_line\nLEFT JOIN actual ON actual.date = base_line.date\nWHERE date_trunc('day', timestamp with time zone $__timeFrom(), '$__timezone') <= base_line.date\norder by base_line.date\n",
+          "rawSql": "WITH since as (\n\tSELECT timezone('UTC', min(start_date)) as date FROM drives\n\tWHERE car_id::text = ANY(string_to_array('${car_id:csv}', ','))\n\tGROUP BY car_id\n),\n\nactual AS (\n\tSELECT\n\t\tdate_trunc('day', timezone('UTC', start_date), '$__timezone') AS date,\n\t\tsum(distance) AS distance\n\tFROM drives\n\tWHERE car_id::text = ANY(string_to_array('${car_id:csv}', ',')) and $__timeFilter(start_date) and end_date is not null\n\tGROUP BY 1\n),\n\nbase_line AS (\n\tSELECT date from generate_series(date_trunc('day', (select date from since), '$__timezone'), date_trunc('day', timestamp with time zone $__timeTo(), '$__timezone'), '1 day'::interval, '$__timezone') date)\n\nSELECT\n  base_line.date as time,\n\tconvert_km(COALESCE(actual.distance, 0)::numeric, '$length_unit') as \"distance_$length_unit\"\nFROM base_line\nLEFT JOIN actual ON actual.date = base_line.date\nWHERE date_trunc('day', timestamp with time zone $__timeFrom(), '$__timezone') <= base_line.date\norder by base_line.date\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -230,7 +248,7 @@
           }
         }
       ],
-      "title": "Total Distance logged",
+      "title": "总里程",
       "type": "stat"
     },
     {
@@ -245,8 +263,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "semi-dark-yellow",
-                "value": 0
+                "color": "semi-dark-yellow"
               }
             ]
           },
@@ -284,7 +301,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -294,7 +311,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "WITH since as (\n\tSELECT timezone('UTC', min(start_date)) as date FROM drives\n\tWHERE car_id = $car_id\n\tGROUP BY car_id\n),\n\nactual AS (\n\tSELECT\n\t\tdate_trunc('day', timezone('UTC', start_date), '$__timezone') AS date,\n\t\tsum((start_${preferred_range}_range_km - end_${preferred_range}_range_km) * cars.efficiency) AS energy\n\tFROM drives\n  INNER JOIN cars on drives.car_id = cars.id\n\tWHERE car_id = $car_id and $__timeFilter(start_date) and end_date is not null\n\tGROUP BY 1\n),\n\nbase_line AS (\n\tSELECT date from generate_series(date_trunc('day', (select date from since), '$__timezone'), date_trunc('day', timestamp with time zone $__timeTo(), '$__timezone'), '1 day'::interval, '$__timezone') date)\n\nSELECT\n  base_line.date as time,\n\tcoalesce(energy, 0) as energy\nFROM base_line\nLEFT JOIN actual ON actual.date = base_line.date\nWHERE date_trunc('day', timestamp with time zone $__timeFrom(), '$__timezone') <= base_line.date\norder by base_line.date\n",
+          "rawSql": "WITH since as (\n\tSELECT timezone('UTC', min(start_date)) as date FROM drives\n\tWHERE car_id::text = ANY(string_to_array('${car_id:csv}', ','))\n\tGROUP BY car_id\n),\n\nactual AS (\n\tSELECT\n\t\tdate_trunc('day', timezone('UTC', start_date), '$__timezone') AS date,\n\t\tsum(NULLIF(GREATEST(start_${preferred_range}_range_km - end_${preferred_range}_range_km, 0), 0) * cars.efficiency) AS energy\n\tFROM drives\n  INNER JOIN cars on drives.car_id = cars.id\n\tWHERE car_id::text = ANY(string_to_array('${car_id:csv}', ',')) and $__timeFilter(start_date) and end_date is not null\n\tGROUP BY 1\n),\n\nbase_line AS (\n\tSELECT date from generate_series(date_trunc('day', (select date from since), '$__timezone'), date_trunc('day', timestamp with time zone $__timeTo(), '$__timezone'), '1 day'::interval, '$__timezone') date)\n\nSELECT\n  base_line.date as time,\n\tcoalesce(energy, 0) as energy\nFROM base_line\nLEFT JOIN actual ON actual.date = base_line.date\nWHERE date_trunc('day', timestamp with time zone $__timeFrom(), '$__timezone') <= base_line.date\norder by base_line.date\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -315,7 +332,7 @@
           }
         }
       ],
-      "title": "Total Energy consumed (net)",
+      "title": "已用电量",
       "type": "stat"
     },
     {
@@ -340,8 +357,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#c7d0d9",
-                "value": 0
+                "color": "#c7d0d9"
               }
             ]
           },
@@ -402,7 +418,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -412,7 +428,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT convert_km((percentile_cont(0.5) WITHIN GROUP (ORDER BY distance))::numeric, '$length_unit') as \"distance_$length_unit\"\nFROM drives\nWHERE car_id = $car_id AND $__timeFilter(start_date) AND end_date IS NOT NULL;",
+          "rawSql": "SELECT convert_km((percentile_cont(0.5) WITHIN GROUP (ORDER BY distance))::numeric, '$length_unit') as \"distance_$length_unit\"\nFROM drives\nWHERE car_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND $__timeFilter(start_date) AND end_date IS NOT NULL;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -433,7 +449,7 @@
           }
         }
       ],
-      "title": "Median distance of a drive",
+      "title": "每次行驶里程中位数",
       "type": "stat"
     },
     {
@@ -449,8 +465,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#c7d0d9",
-                "value": 0
+                "color": "#c7d0d9"
               }
             ]
           },
@@ -513,7 +528,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -524,7 +539,7 @@
           "refId": "A"
         }
       ],
-      "title": "Ø Distance driven per day",
+      "title": "平均每天行驶距离",
       "type": "stat"
     },
     {
@@ -540,8 +555,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#c7d0d9",
-                "value": 0
+                "color": "#c7d0d9"
               }
             ]
           },
@@ -579,7 +593,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -590,7 +604,7 @@
           "refId": "A"
         }
       ],
-      "title": "Ø Energy consumed (net) per day",
+      "title": "平均每天消耗电量",
       "type": "stat"
     },
     {
@@ -615,8 +629,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#c7d0d9",
-                "value": 0
+                "color": "#c7d0d9"
               }
             ]
           },
@@ -679,7 +692,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -689,7 +702,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT convert_km(max(speed_max), '$length_unit') AS speed_${length_unit}h\nFROM drives\nWHERE car_id = $car_id and $__timeFilter(start_date) and end_date is not null;",
+          "rawSql": "SELECT convert_km(max(speed_max), '$length_unit') AS speed_${length_unit}h\nFROM drives\nWHERE car_id::text = ANY(string_to_array('${car_id:csv}', ',')) and $__timeFilter(start_date) and end_date is not null;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -710,7 +723,7 @@
           }
         }
       ],
-      "title": "Max Speed",
+      "title": "最大速度",
       "type": "stat"
     },
     {
@@ -735,8 +748,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#c7d0d9",
-                "value": 0
+                "color": "#c7d0d9"
               }
             ]
           },
@@ -799,7 +811,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -809,7 +821,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT convert_km(max(speed_max), '$length_unit') AS speed_${length_unit}h\nFROM drives\nWHERE car_id = $car_id and $__timeFilter(start_date) and end_date is not null;",
+          "rawSql": "SELECT convert_km(max(speed_max), '$length_unit') AS speed_${length_unit}h\nFROM drives\nWHERE car_id::text = ANY(string_to_array('${car_id:csv}', ',')) and $__timeFilter(start_date) and end_date is not null;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -831,7 +843,7 @@
         }
       ],
       "timeFrom": "30d",
-      "title": "Max Speed",
+      "title": "最大速度 (最近30天)",
       "type": "stat"
     },
     {
@@ -856,8 +868,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#c7d0d9",
-                "value": 0
+                "color": "#c7d0d9"
               }
             ]
           },
@@ -920,7 +931,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -930,7 +941,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT convert_km(max(speed_max), '$length_unit') AS speed_${length_unit}h\nFROM drives\nWHERE car_id = $car_id and $__timeFilter(start_date) and end_date is not null;",
+          "rawSql": "SELECT convert_km(max(speed_max), '$length_unit') AS speed_${length_unit}h\nFROM drives\nWHERE car_id::text = ANY(string_to_array('${car_id:csv}', ',')) and $__timeFilter(start_date) and end_date is not null;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -952,7 +963,7 @@
         }
       ],
       "timeFrom": "7d",
-      "title": "Max Speed",
+      "title": "最大速度 (最近七天)",
       "type": "stat"
     },
     {
@@ -960,6 +971,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -995,8 +1007,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-green",
-                "value": 0
+                "color": "super-light-green"
               }
             ]
           }
@@ -1053,7 +1064,7 @@
         "xTickLabelRotation": 0,
         "xTickLabelSpacing": 0
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1063,7 +1074,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH drivedata AS (\r\n    SELECT\r\n        ROUND(convert_km(p.speed::numeric, '$length_unit') / 10, 0) * 10 AS speed_section_${length_unit},\r\n        EXTRACT(EPOCH FROM (LEAD(p.\"date\") OVER (PARTITION BY p.drive_id ORDER BY p.\"date\") - p.\"date\")) AS seconds_elapsed\r\n    FROM positions p\r\n    WHERE p.car_id = $car_id AND $__timeFilter(p.date) AND p.ideal_battery_range_km IS NOT NULL\r\n)\r\n\r\nSELECT \r\n    speed_section_${length_unit} AS \"Speed\",\r\n    SUM(seconds_elapsed) * 100 / SUM(SUM(seconds_elapsed)) OVER () AS \"Elapsed\", \r\n    TO_CHAR((SUM(seconds_elapsed) || ' second')::interval, 'HH24:MI:SS') AS \"Time\"\r\nFROM drivedata\r\nWHERE speed_section_${length_unit} > 0\r\nGROUP BY speed_section_${length_unit}\r\nORDER BY speed_section_${length_unit};\r\n",
+          "rawSql": "WITH drivedata AS (\r\n    SELECT\r\n        ROUND(convert_km(p.speed::numeric, '$length_unit') / 10, 0) * 10 AS speed_section_${length_unit},\r\n        EXTRACT(EPOCH FROM (LEAD(p.\"date\") OVER (PARTITION BY p.drive_id ORDER BY p.\"date\") - p.\"date\")) AS seconds_elapsed\r\n    FROM positions p\r\n    WHERE p.car_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND $__timeFilter(p.date) AND p.ideal_battery_range_km IS NOT NULL\r\n)\r\n\r\nSELECT \r\n    speed_section_${length_unit} AS \"Speed\",\r\n    SUM(seconds_elapsed) * 100 / SUM(SUM(seconds_elapsed)) OVER () AS \"Elapsed\", \r\n    TO_CHAR((SUM(seconds_elapsed) || ' second')::interval, 'HH24:MI:SS') AS \"Time\"\r\nFROM drivedata\r\nWHERE speed_section_${length_unit} > 0\r\nGROUP BY speed_section_${length_unit}\r\nORDER BY speed_section_${length_unit};\r\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1084,7 +1095,7 @@
           }
         }
       ],
-      "title": "Speed Histogram ($speed_unit)",
+      "title": "速度直方图 ($speed_unit)",
       "transformations": [
         {
           "id": "filterFieldsByName",
@@ -1114,8 +1125,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#c7d0d9",
-                "value": 0
+                "color": "#c7d0d9"
               }
             ]
           },
@@ -1178,7 +1188,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1188,7 +1198,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH since as (\r\n\tSELECT timezone('UTC', min(start_date)) as date FROM drives\r\n\tWHERE car_id = $car_id\r\n\tGROUP BY car_id\r\n)\r\n\r\nselect\r\n  convert_km(((max(end_km) - min(start_km)) / greatest(extract(days from (timestamp with time zone $__timeTo() - greatest(timestamp with time zone $__timeFrom(), (select date from since)))), 1) * (365/12))::numeric, '$length_unit') as \"mileage_$length_unit\"\r\nfrom drives\r\nwhere car_id = $car_id and $__timeFilter(start_date) and end_date is not null\r\ngroup by car_id",
+          "rawSql": "WITH since as (\r\n\tSELECT timezone('UTC', min(start_date)) as date FROM drives\r\n\tWHERE car_id::text = ANY(string_to_array('${car_id:csv}', ','))\r\n\tGROUP BY car_id\r\n)\r\n\r\nselect\r\n  convert_km(((max(end_km) - min(start_km)) / greatest(extract(days from (timestamp with time zone $__timeTo() - greatest(timestamp with time zone $__timeFrom(), (select date from since)))), 1) * (365/12))::numeric, '$length_unit') as \"mileage_$length_unit\"\r\nfrom drives\r\nwhere car_id::text = ANY(string_to_array('${car_id:csv}', ',')) and $__timeFilter(start_date) and end_date is not null\r\ngroup by car_id",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1209,7 +1219,7 @@
           }
         }
       ],
-      "title": "Extrapolated monthly mileage",
+      "title": "预估每月里程数",
       "type": "stat"
     },
     {
@@ -1225,8 +1235,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#c7d0d9",
-                "value": 0
+                "color": "#c7d0d9"
               }
             ]
           },
@@ -1289,7 +1298,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1300,7 +1309,7 @@
           "refId": "A"
         }
       ],
-      "title": "Extrapolated annual mileage",
+      "title": "估计年行驶里程",
       "transformations": [
         {
           "id": "calculateField",
@@ -1376,8 +1385,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "semi-dark-blue",
-                "value": 0
+                "color": "semi-dark-blue"
               },
               {
                 "color": "light-red",
@@ -1420,7 +1428,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1430,7 +1438,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT * FROM (\nSELECT\n\tCOALESCE(g.name, COALESCE(a.name, nullif(CONCAT_WS(' ', a.road, a.house_number), ''))) as name,\n\tcount(*) AS visited\nFROM drives t\nINNER JOIN addresses a ON end_address_id = a.id\nLEFT JOIN geofences g ON end_geofence_id = g.id\nWHERE t.car_id = $car_id AND $__timeFilter(t.start_date) and $__timeFilter(t.end_date) \nGROUP BY 1\nORDER BY visited DESC) AS destinations\nWHERE name NOT ILIKE ALL ${exclude_formatted_string:raw}\nLIMIT 10;",
+          "rawSql": "SELECT * FROM (\nSELECT\n\tCOALESCE(g.name, COALESCE(a.name, nullif(CONCAT_WS(' ', a.road, a.house_number), ''))) as name,\n\tcount(*) AS visited\nFROM drives t\nINNER JOIN addresses a ON end_address_id = a.id\nLEFT JOIN geofences g ON end_geofence_id = g.id\nWHERE t.car_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND $__timeFilter(t.start_date) and $__timeFilter(t.end_date) \nGROUP BY 1\nORDER BY visited DESC) AS destinations\nWHERE name NOT ILIKE ALL ${exclude_formatted_string:raw}\nLIMIT 10;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1451,15 +1459,15 @@
           }
         }
       ],
-      "title": "Top 10 Destinations (in this period)",
+      "title": "常用目的地",
       "type": "bargauge"
     }
   ],
   "preload": false,
   "refresh": false,
-  "schemaVersion": 42,
+  "schemaVersion": 41,
   "tags": [
-    "tesla"
+    "trip"
   ],
   "templating": {
     "list": [
@@ -1477,7 +1485,6 @@
         "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1494,7 +1501,6 @@
         "query": "select unit_of_length from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1511,7 +1517,6 @@
         "query": "SELECT CASE WHEN '$length_unit' = 'km' THEN 'km/h' WHEN '$length_unit' = 'mi' THEN 'mph' END",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1528,7 +1533,6 @@
         "query": "select preferred_range from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1545,7 +1549,6 @@
         "query": "select base_url from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1553,8 +1556,8 @@
           "text": "",
           "value": ""
         },
-        "description": "Comma separated list of locations to exclude. Ex: home, work",
-        "label": "Exclude locations",
+        "description": "逗号分隔的要排除位置列表。例如：家，公司）。",
+        "label": "排除地点",
         "name": "exclude",
         "options": [
           {
@@ -1580,7 +1583,6 @@
         "query": "WITH splits AS (\n    SELECT unnest(string_to_array('$exclude', ', ')) AS part\n),\nsplit_strings AS (\n\tSELECT part AS part\n\tFROM (VALUES (NULL)) AS v(dummy)\n\tLEFT JOIN splits ON TRUE\n),\nexclude_string AS (\n\tSELECT array_to_string(array_agg(case when part is null then '''''' else '''%' || part || '%''' end), ', ') AS formatted_string\n\tFROM split_strings\n)\nSELECT '(ARRAY[' || formatted_string || '])' FROM exclude_string",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       }
     ]
@@ -1590,9 +1592,8 @@
     "to": "now"
   },
   "timepicker": {},
-  "timezone": "browser",
-  "title": "Drive Stats",
+  "timezone": "",
+  "title": "行程统计（汇总)",
   "uid": "_7WkNSyWk",
-  "version": 1,
-  "weekStart": ""
+  "version": 1
 }

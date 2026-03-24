@@ -20,21 +20,41 @@
   "graphTooltip": 1,
   "links": [
     {
-      "icon": "dashboard",
-      "tags": [],
-      "title": "TeslaMate",
-      "tooltip": "",
-      "type": "link",
-      "url": "${base_url:raw}"
+      "asDropdown": true,
+      "icon": "external link",
+      "tags": [
+        "tesla2"
+      ],
+      "title": "车辆信息",
+      "type": "dashboards"
     },
     {
       "asDropdown": true,
       "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
       "tags": [
-        "tesla"
+        "battery"
       ],
-      "title": "Dashboards",
-      "type": "dashboards"
+      "targetBlank": false,
+      "title": "电池",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    },
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [
+        "trip"
+      ],
+      "targetBlank": false,
+      "title": "行驶",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
     }
   ],
   "panels": [
@@ -43,6 +63,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -53,8 +74,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-blue",
-                "value": 0
+                "color": "super-light-blue"
               }
             ]
           }
@@ -85,7 +105,7 @@
         "textMode": "value_and_name",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -95,7 +115,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  ROUND(convert_km(sum(distance)::numeric, '$length_unit'), 0) || ' $length_unit' as \"Logged\",\n  ROUND(convert_km(max(end_km)::numeric, '$length_unit'), 0) || ' $length_unit' as \"Odometer\"\nfrom drives where car_id = $car_id;",
+          "rawSql": "SELECT\n  ROUND(convert_km(sum(distance)::numeric, '$length_unit'), 0) || ' $length_unit' as \"Logged\",\n  ROUND(convert_km(max(end_km)::numeric, '$length_unit'), 0) || ' $length_unit' as \"Odometer\"\nfrom drives where car_id::text = ANY(string_to_array('${car_id:csv}', ','));",
           "refId": "A",
           "sql": {
             "columns": [
@@ -116,7 +136,7 @@
           }
         }
       ],
-      "title": "Mileage",
+      "title": "里程",
       "type": "stat"
     },
     {
@@ -124,6 +144,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -134,8 +155,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-blue",
-                "value": 0
+                "color": "super-light-blue"
               }
             ]
           }
@@ -166,7 +186,7 @@
         "textMode": "value_and_name",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -176,7 +196,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(id) AS \"Charges\" FROM charging_processes WHERE car_id=$car_id \n",
+          "rawSql": "SELECT COUNT(id) AS \"Charges\" FROM charging_processes WHERE car_id::text = ANY(string_to_array('${car_id:csv}', ',')) \n",
           "refId": "Charges",
           "sql": {
             "columns": [
@@ -204,7 +224,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(id) AS \"Drives\" FROM drives WHERE car_id=$car_id ",
+          "rawSql": "SELECT COUNT(id) AS \"Drives\" FROM drives WHERE car_id::text = ANY(string_to_array('${car_id:csv}', ',')) ",
           "refId": "Drives",
           "sql": {
             "columns": [
@@ -225,7 +245,7 @@
           }
         }
       ],
-      "title": "Stats",
+      "title": "统计",
       "type": "stat"
     },
     {
@@ -233,6 +253,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -243,8 +264,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-blue",
-                "value": 0
+                "color": "super-light-blue"
               }
             ]
           }
@@ -275,7 +295,7 @@
         "textMode": "value_and_name",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -285,7 +305,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(id) as \"Nº Car Updates\"\nFROM Updates \nWHERE car_id = $car_id\n",
+          "rawSql": "SELECT COUNT(id) as \"Nº Car Updates\"\nFROM Updates \nWHERE car_id::text = ANY(string_to_array('${car_id:csv}', ','))\n",
           "refId": "Car Updates",
           "sql": {
             "columns": [
@@ -313,7 +333,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "select split_part(version, ' ', 1) as \"Current Car Firmware\" \r\nfrom updates \r\nwhere car_id = $car_id \r\norder by start_date desc \r\nlimit 1",
+          "rawSql": "select split_part(version, ' ', 1) as \"Current Car Firmware\" \r\nfrom updates \r\nwhere car_id::text = ANY(string_to_array('${car_id:csv}', ',')) \r\norder by start_date desc \r\nlimit 1",
           "refId": "Firmware",
           "sql": {
             "columns": [
@@ -334,7 +354,7 @@
           }
         }
       ],
-      "title": "Software",
+      "title": "软件",
       "type": "stat"
     },
     {
@@ -353,8 +373,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-blue",
-                "value": 0
+                "color": "super-light-blue"
               }
             ]
           }
@@ -385,7 +404,7 @@
         "textMode": "value_and_name",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -395,7 +414,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(id) as \"Charges not closed\"\nFROM charging_processes \nWHERE car_id = $car_id AND end_date is null\n",
+          "rawSql": "SELECT COUNT(id) as \"Charges not closed\"\nFROM charging_processes \nWHERE car_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND end_date is null\n",
           "refId": "Charges",
           "sql": {
             "columns": [
@@ -423,7 +442,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(id) AS \"Drives not closed\"\r\nFROM drives \r\nWHERE car_id = $car_id AND end_date is null",
+          "rawSql": "SELECT COUNT(id) AS \"Drives not closed\"\r\nFROM drives \r\nWHERE car_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND end_date is null",
           "refId": "Drives",
           "sql": {
             "columns": [
@@ -444,7 +463,7 @@
           }
         }
       ],
-      "title": "Incomplete Data",
+      "title": "不完整数据",
       "type": "stat"
     },
     {
@@ -462,8 +481,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-blue",
-                "value": 0
+                "color": "super-light-blue"
               }
             ]
           }
@@ -492,7 +510,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -503,7 +521,7 @@
           "format": "table",
           "rawQuery": true,
           "rawSql": "SELECT regexp_replace(version(), 'PostgreSQL ([^ ]+) .*', '\\1') AS version;",
-          "refId": "PostgreSQL Version",
+          "refId": "A",
           "sql": {
             "columns": [
               {
@@ -523,7 +541,7 @@
           }
         }
       ],
-      "title": "PostgreSQL Version",
+      "title": "PostgreSQL 版本",
       "type": "stat"
     },
     {
@@ -536,7 +554,7 @@
       },
       "id": 34,
       "panels": [],
-      "title": "Database Information",
+      "title": "数据库信息",
       "type": "row"
     },
     {
@@ -554,9 +572,6 @@
             "cellOptions": {
               "type": "auto"
             },
-            "footer": {
-              "reducers": []
-            },
             "inspect": false,
             "minWidth": 80
           },
@@ -565,8 +580,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "red",
@@ -604,9 +618,17 @@
       "id": 33,
       "options": {
         "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -655,9 +677,6 @@
             "cellOptions": {
               "type": "auto"
             },
-            "footer": {
-              "reducers": []
-            },
             "inspect": false,
             "minWidth": 160
           },
@@ -666,8 +685,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "red",
@@ -704,9 +722,17 @@
       "id": 38,
       "options": {
         "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -756,9 +782,6 @@
             "cellOptions": {
               "type": "auto"
             },
-            "footer": {
-              "reducers": []
-            },
             "inspect": false,
             "minWidth": 110
           },
@@ -767,8 +790,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "red",
@@ -849,10 +871,18 @@
       "id": 41,
       "options": {
         "cellHeight": "sm",
-        "enablePagination": true,
+        "footer": {
+          "countRows": false,
+          "enablePagination": true,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -883,7 +913,7 @@
           }
         }
       ],
-      "title": "Indexes",
+      "title": "索引",
       "type": "table"
     },
     {
@@ -891,6 +921,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -901,8 +932,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-blue",
-                "value": 0
+                "color": "super-light-blue"
               }
             ]
           },
@@ -912,7 +942,7 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 3,
+        "w": 6,
         "x": 0,
         "y": 21
       },
@@ -934,7 +964,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -945,7 +975,7 @@
           "format": "table",
           "rawQuery": true,
           "rawSql": "SELECT \n    SUM(pg_total_relation_size(relid)) As \"Size\"\nFROM \n    pg_catalog.pg_statio_user_tables;",
-          "refId": "Database Total Size",
+          "refId": "DistanceLogged",
           "sql": {
             "columns": [
               {
@@ -965,7 +995,7 @@
           }
         }
       ],
-      "title": "Database Total Size",
+      "title": "数据库总大小",
       "type": "stat"
     },
     {
@@ -973,7 +1003,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
-      "description": "<b>Shared Buffers:</b> This metric shows the amount of memory PostgreSQL uses to store frequently accessed data, like tables and indexes, to make queries faster by avoiding slow disk reads.\n\n<b>Recommended value:</b> Use about 25% of your system's total RAM (e.g., 1GB for a system with 4GB RAM). Start with a modest value and adjust based on your app's needs. Setting it too high can waste memory.\n\n<b>To change in a Postgres Docker Compose file:</b> In your docker-compose.yml, add or update the command field under the Postgres service to include the shared_buffers setting. For example:\n\n<pre>\nservices:\n  database:\n    image: postgres:18-trixie\n    command: postgres -c shared_buffers=1GB\n    ...\n</pre>\n\nAfter updating the file, run <code>docker compose down</code> and <code>docker compose up -d</code> to restart the container and apply the change.\n\nFor more details: <a href='https://www.postgresql.org/docs/18/runtime-config-resource.html#GUC-SHARED-BUFFERS' target='_blank'>PostgreSQL: Documentation: 18: 19.4. Resource Consumption</a>",
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -984,90 +1014,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-blue",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "bytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 3,
-        "x": 3,
-        "y": 21
-      },
-      "id": 52,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "horizontal",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "/.*/",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "value",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.4.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "TeslaMate"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT cast(setting as numeric) * 8 * 1024 FROM pg_catalog.pg_settings WHERE name = 'shared_buffers';",
-          "refId": "Shared Buffers",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        }
-      ],
-      "title": "Shared Buffers",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "TeslaMate"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "super-light-blue",
-                "value": 0
+                "color": "super-light-blue"
               }
             ]
           }
@@ -1098,7 +1045,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1109,7 +1056,7 @@
           "format": "table",
           "rawQuery": true,
           "rawSql": "show timezone;",
-          "refId": "Timezone",
+          "refId": "DistanceLogged",
           "sql": {
             "columns": [
               {
@@ -1129,7 +1076,7 @@
           }
         }
       ],
-      "title": "Timezone",
+      "title": "时区",
       "type": "stat"
     },
     {
@@ -1142,7 +1089,7 @@
       },
       "id": 44,
       "panels": [],
-      "title": "Statistics of SQL planning and execution",
+      "title": "SQL 规划与执行统计",
       "type": "row"
     },
     {
@@ -1150,6 +1097,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1160,8 +1108,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-blue",
-                "value": 0
+                "color": "super-light-blue"
               }
             ]
           }
@@ -1190,7 +1137,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1221,7 +1168,7 @@
           }
         }
       ],
-      "title": "Time at which all statistics in the pg_stat_statements view were last reset",
+      "title": "pg_stat_statements 统计最近重置时间",
       "type": "stat"
     },
     {
@@ -1229,6 +1176,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1239,8 +1187,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-blue",
-                "value": 0
+                "color": "super-light-blue"
               }
             ]
           }
@@ -1269,7 +1216,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1300,7 +1247,7 @@
           }
         }
       ],
-      "title": "Number of Statements tracked via pg_stat_statements",
+      "title": "pg_stat_statements 跟踪语句数",
       "type": "stat"
     },
     {
@@ -1324,8 +1271,8 @@
         "content": "Check the [contribution docs](https://docs.teslamate.org/docs/development#enable-pg_stat_statements-to-collect-query-statistics) on how to enable tracking planning and execution statistics of all SQL statements executed by a server.\n",
         "mode": "markdown"
       },
-      "pluginVersion": "12.4.0",
-      "title": "About pg_stat_statements (track statistics of SQL planning and execution)",
+      "pluginVersion": "11.6.1",
+      "title": "关于 pg_stat_statements（SQL 规划与执行统计）",
       "type": "text"
     },
     {
@@ -1344,9 +1291,6 @@
               "type": "auto",
               "wrapText": false
             },
-            "footer": {
-              "reducers": []
-            },
             "inspect": false
           },
           "mappings": [],
@@ -1354,8 +1298,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1429,11 +1372,19 @@
       "id": 45,
       "options": {
         "cellHeight": "sm",
-        "enablePagination": true,
+        "footer": {
+          "countRows": false,
+          "enablePagination": true,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1464,7 +1415,7 @@
           }
         }
       ],
-      "title": "Top 20 Statements (by mean time spent executing the statement)",
+      "title": "前 20 语句（按平均执行时间）",
       "type": "table"
     },
     {
@@ -1483,9 +1434,6 @@
               "type": "auto",
               "wrapText": false
             },
-            "footer": {
-              "reducers": []
-            },
             "inspect": false
           },
           "mappings": [],
@@ -1493,8 +1441,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1568,11 +1515,19 @@
       "id": 46,
       "options": {
         "cellHeight": "sm",
-        "enablePagination": true,
+        "footer": {
+          "countRows": false,
+          "enablePagination": true,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1603,15 +1558,15 @@
           }
         }
       ],
-      "title": "Top 20 Statements (by total time spent executing the statement)",
+      "title": "前 20 语句（按总执行时间）",
       "type": "table"
     }
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 42,
+  "schemaVersion": 41,
   "tags": [
-    "tesla"
+    "tesla2"
   ],
   "templating": {
     "list": [
@@ -1629,7 +1584,6 @@
         "query": "select unit_of_length from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1646,7 +1600,6 @@
         "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1663,7 +1616,6 @@
         "query": "SELECT\n    CASE WHEN $pg_stat_statements_enabled = 1 THEN 'SELECT stats_reset FROM pg_stat_statements_info;' else 'SELECT NULL;' end",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1680,7 +1632,6 @@
         "query": "SELECT\n    CASE WHEN $pg_stat_statements_enabled = 1 THEN 'SELECT count(*) FROM pg_stat_statements;' else 'SELECT NULL;' end",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1697,7 +1648,6 @@
         "query": "SELECT\n    CASE WHEN $pg_stat_statements_enabled = 1 THEN 'select\n  calls as \"Calls\",\n  mean_exec_time as \"Mean Exec Time\",\n  total_exec_time as \"Total Exec Time\",\n  query as \"Query\"\nfrom pg_stat_statements\nORDER BY mean_exec_time desc\nlimit 20;' else 'SELECT NULL;' end",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1714,7 +1664,6 @@
         "query": "SELECT\n    CASE WHEN $pg_stat_statements_enabled = 1 THEN 'select\n  calls as \"Calls\",\n  mean_exec_time as \"Mean Exec Time\",\n  total_exec_time as \"Total Exec Time\",\n  query as \"Query\"\nfrom pg_stat_statements\nORDER BY total_exec_time desc\nlimit 20;' else 'SELECT NULL;' end",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1731,7 +1680,6 @@
         "query": "SELECT EXISTS (\nSELECT 1\nFROM information_schema.tables\nWHERE table_name = 'pg_stat_statements'\n)::int AS table_existence",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1748,7 +1696,6 @@
         "query": "select base_url from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       }
     ]
@@ -1762,8 +1709,7 @@
     "refresh_intervals": []
   },
   "timezone": "browser",
-  "title": "Database Information",
+  "title": "数据库信息",
   "uid": "jchmDbInfo",
-  "version": 1,
-  "weekStart": ""
+  "version": 1
 }

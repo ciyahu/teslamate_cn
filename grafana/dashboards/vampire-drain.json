@@ -20,21 +20,41 @@
   "graphTooltip": 0,
   "links": [
     {
-      "icon": "dashboard",
-      "tags": [],
-      "title": "TeslaMate",
-      "tooltip": "",
-      "type": "link",
-      "url": "${base_url:raw}"
+      "asDropdown": true,
+      "icon": "external link",
+      "tags": [
+        "tesla2"
+      ],
+      "title": "车辆信息",
+      "type": "dashboards"
     },
     {
       "asDropdown": true,
       "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
       "tags": [
-        "tesla"
+        "battery"
       ],
-      "title": "Dashboards",
-      "type": "dashboards"
+      "targetBlank": false,
+      "title": "电池",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    },
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [
+        "trip"
+      ],
+      "targetBlank": false,
+      "title": "行驶",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
     }
   ],
   "panels": [
@@ -49,7 +69,7 @@
       "id": 4,
       "panels": [],
       "repeat": "car_id",
-      "title": "$car_id",
+      "title": "车辆：$car_id",
       "type": "row"
     },
     {
@@ -67,9 +87,6 @@
             "cellOptions": {
               "type": "auto"
             },
-            "footer": {
-              "reducers": []
-            },
             "inspect": false
           },
           "mappings": [],
@@ -77,8 +94,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "red",
@@ -96,7 +112,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Start"
+                "value": "起始时间"
               },
               {
                 "id": "unit",
@@ -108,7 +124,7 @@
                   {
                     "targetBlank": false,
                     "title": "",
-                    "url": "/d/zm7wN6Zgz/drive-details?from=${__data.fields.start_date_ts.numeric}&to=${__data.fields.end_date_ts.numeric}"
+                    "url": "/d/wemate_am7wN6Zgz/drive-details?from=${__data.fields.start_date_ts.numeric}&to=${__data.fields.end_date_ts.numeric}"
                   }
                 ]
               },
@@ -126,7 +142,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "End"
+                "value": "结束时间"
               },
               {
                 "id": "unit",
@@ -146,7 +162,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range loss"
+                "value": "续航损失"
               },
               {
                 "id": "unit",
@@ -170,7 +186,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Period"
+                "value": "历时"
               },
               {
                 "id": "unit",
@@ -192,8 +208,7 @@
                   "mode": "absolute",
                   "steps": [
                     {
-                      "color": "rgb(133, 142, 133)",
-                      "value": 0
+                      "color": "rgb(133, 142, 133)"
                     },
                     {
                       "color": "#56A64B",
@@ -239,7 +254,7 @@
             },
             "properties": [
               {
-                "id": "custom.hideFrom.viz",
+                "id": "custom.hidden",
                 "value": true
               }
             ]
@@ -252,7 +267,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Standby"
+                "value": "待机时间占比"
               },
               {
                 "id": "unit",
@@ -270,8 +285,7 @@
                   "mode": "absolute",
                   "steps": [
                     {
-                      "color": "#FF7383",
-                      "value": 0
+                      "color": "#FF7383"
                     },
                     {
                       "color": "#FFB357",
@@ -302,7 +316,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Energy drained"
+                "value": "耗电量"
               },
               {
                 "id": "unit",
@@ -326,7 +340,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Power"
+                "value": "平均损失功率"
               },
               {
                 "id": "unit",
@@ -350,7 +364,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Range loss / h"
+                "value": "每小时续航损失"
               },
               {
                 "id": "unit",
@@ -374,7 +388,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range loss"
+                "value": "续航损失"
               },
               {
                 "id": "unit",
@@ -470,9 +484,17 @@
       "id": 2,
       "options": {
         "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -482,7 +504,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "with merge as (\n SELECT \n    c.start_date AS start_date,\n    c.end_date AS end_date,\n    c.start_ideal_range_km AS start_ideal_range_km,\n    c.end_ideal_range_km AS end_ideal_range_km,\n    c.start_rated_range_km AS start_rated_range_km,\n    c.end_rated_range_km AS end_rated_range_km,\n    start_battery_level,\n    end_battery_level,\n    p.usable_battery_level AS start_usable_battery_level,\n    NULL AS end_usable_battery_level,\n    p.odometer AS start_km,\n    p.odometer AS end_km\n FROM charging_processes c\n JOIN positions p ON c.position_id = p.id\n WHERE c.car_id = $car_id AND $__timeFilter(start_date)\n UNION\n SELECT \n    d.start_date AS start_date,\n    d.end_date AS end_date,\n    d.start_ideal_range_km AS start_ideal_range_km,\n    d.end_ideal_range_km AS end_ideal_range_km,\n    d.start_rated_range_km AS start_rated_range_km,\n    d.end_rated_range_km AS end_rated_range_km,\n    start_position.battery_level AS start_battery_level,\n    end_position.battery_level AS end_battery_level,\n    start_position.usable_battery_level AS start_usable_battery_level,\n    end_position.usable_battery_level AS end_usable_battery_level,\n    d.start_km AS start_km,\n    d.end_km AS end_km\n FROM drives d\n JOIN positions start_position ON d.start_position_id = start_position.id\n JOIN positions end_position ON d.end_position_id = end_position.id\n WHERE d.car_id = $car_id AND $__timeFilter(start_date)\n), \nv as (\n SELECT\n    lag(t.end_date) OVER w AS start_date,\n    t.start_date AS end_date,\n    lag(t.end_${preferred_range}_range_km) OVER w AS start_range,\n    t.start_${preferred_range}_range_km AS end_range,\n    lag(t.end_km) OVER w AS start_km,\n    t.start_km AS end_km,\n    EXTRACT(EPOCH FROM age(t.start_date, lag(t.end_date) OVER w)) AS duration,\n    lag(t.end_battery_level) OVER w AS start_battery_level,\n    lag(t.end_usable_battery_level) OVER w AS start_usable_battery_level,\n\t\tstart_battery_level AS end_battery_level,\n\t\tstart_usable_battery_level AS end_usable_battery_level,\n\t\tstart_battery_level > COALESCE(start_usable_battery_level, start_battery_level) AS has_reduced_range\n  FROM merge t\n  WINDOW w AS (ORDER BY t.start_date ASC)\n  ORDER BY start_date DESC\n)\n\nSELECT\n  floor(extract(epoch FROM v.start_date)) * 1000 AS start_date_ts,\n  ceil(extract(epoch FROM v.end_date)) * 1000 AS end_date_ts,\n  -- Columns\n  v.start_date,\n  v.end_date,\n  v.duration,\n  (coalesce(s_asleep.sleep, 0) + coalesce(s_offline.sleep, 0)) / v.duration as standby,\n\t-greatest(v.start_battery_level - v.end_battery_level, 0) as soc_diff,\n\tCASE WHEN has_reduced_range THEN 1 ELSE 0 END as has_reduced_range,\n\tconvert_km(CASE WHEN has_reduced_range THEN NULL ELSE (v.start_range - v.end_range)::numeric END, '$length_unit') AS range_diff_$length_unit,\n  CASE WHEN has_reduced_range THEN NULL ELSE (v.start_range - v.end_range) * c.efficiency END AS consumption,\n  CASE WHEN has_reduced_range THEN NULL ELSE ((v.start_range - v.end_range) * c.efficiency) / (v.duration / 3600) * 1000 END as avg_power,\n  convert_km(CASE WHEN has_reduced_range THEN NULL ELSE ((v.start_range - v.end_range) / (v.duration / 3600))::numeric END, '$length_unit') AS range_lost_per_hour_${length_unit}\nFROM v,\n  LATERAL (\n    SELECT EXTRACT(EPOCH FROM sum(age(s.end_date, s.start_date))) as sleep\n    FROM states s\n    WHERE\n      state = 'asleep' AND\n      v.start_date <= s.start_date AND s.end_date <= v.end_date AND\n      s.car_id = $car_id\n  ) s_asleep,\n  LATERAL (\n    SELECT EXTRACT(EPOCH FROM sum(age(s.end_date, s.start_date))) as sleep\n    FROM states s\n    WHERE\n      state = 'offline' AND\n      v.start_date <= s.start_date AND s.end_date <= v.end_date AND\n      s.car_id = $car_id\n  ) s_offline\nJOIN cars c ON c.id = $car_id\nWHERE\n  v.duration > ($duration * 60 * 60)\n  AND v.start_range - v.end_range >= 0\n  AND v.end_km - v.start_km < 1;",
+          "rawSql": "with merge as (\n SELECT \n    c.start_date AS start_date,\n    c.end_date AS end_date,\n    c.start_ideal_range_km AS start_ideal_range_km,\n    c.end_ideal_range_km AS end_ideal_range_km,\n    c.start_rated_range_km AS start_rated_range_km,\n    c.end_rated_range_km AS end_rated_range_km,\n    start_battery_level,\n    end_battery_level,\n    p.usable_battery_level AS start_usable_battery_level,\n    NULL AS end_usable_battery_level,\n    p.odometer AS start_km,\n    p.odometer AS end_km\n FROM charging_processes c\n JOIN positions p ON c.position_id = p.id\n WHERE c.car_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND $__timeFilter(start_date)\n UNION\n SELECT \n    d.start_date AS start_date,\n    d.end_date AS end_date,\n    d.start_ideal_range_km AS start_ideal_range_km,\n    d.end_ideal_range_km AS end_ideal_range_km,\n    d.start_rated_range_km AS start_rated_range_km,\n    d.end_rated_range_km AS end_rated_range_km,\n    start_position.battery_level AS start_battery_level,\n    end_position.battery_level AS end_battery_level,\n    start_position.usable_battery_level AS start_usable_battery_level,\n    end_position.usable_battery_level AS end_usable_battery_level,\n    d.start_km AS start_km,\n    d.end_km AS end_km\n FROM drives d\n JOIN positions start_position ON d.start_position_id = start_position.id\n JOIN positions end_position ON d.end_position_id = end_position.id\n WHERE d.car_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND $__timeFilter(start_date)\n), \nv as (\n SELECT\n    lag(t.end_date) OVER w AS start_date,\n    t.start_date AS end_date,\n    lag(t.end_${preferred_range}_range_km) OVER w AS start_range,\n    t.start_${preferred_range}_range_km AS end_range,\n    lag(t.end_km) OVER w AS start_km,\n    t.start_km AS end_km,\n    EXTRACT(EPOCH FROM age(t.start_date, lag(t.end_date) OVER w)) AS duration,\n    lag(t.end_battery_level) OVER w AS start_battery_level,\n    lag(t.end_usable_battery_level) OVER w AS start_usable_battery_level,\n\t\tstart_battery_level AS end_battery_level,\n\t\tstart_usable_battery_level AS end_usable_battery_level,\n\t\tstart_battery_level > COALESCE(start_usable_battery_level, start_battery_level) AS has_reduced_range\n  FROM merge t\n  WINDOW w AS (ORDER BY t.start_date ASC)\n  ORDER BY start_date DESC\n)\n\nSELECT\n  round(extract(epoch FROM v.start_date)) * 1000 AS start_date_ts,\n  round(extract(epoch FROM v.end_date)) * 1000 AS end_date_ts,\n  -- Columns\n  v.start_date,\n  v.end_date,\n  v.duration,\n  (coalesce(s_asleep.sleep, 0) + coalesce(s_offline.sleep, 0)) / v.duration as standby,\n\t-greatest(v.start_battery_level - v.end_battery_level, 0) as soc_diff,\n\tCASE WHEN has_reduced_range THEN 1 ELSE 0 END as has_reduced_range,\n\tconvert_km(CASE WHEN has_reduced_range THEN NULL ELSE (v.start_range - v.end_range)::numeric END, '$length_unit') AS range_diff_$length_unit,\n  CASE WHEN has_reduced_range THEN NULL ELSE (v.start_range - v.end_range) * c.efficiency END AS consumption,\n  CASE WHEN has_reduced_range THEN NULL ELSE ((v.start_range - v.end_range) * c.efficiency) / (v.duration / 3600) * 1000 END as avg_power,\n  convert_km(CASE WHEN has_reduced_range THEN NULL ELSE ((v.start_range - v.end_range) / (v.duration / 3600))::numeric END, '$length_unit') AS range_lost_per_hour_${length_unit}\nFROM v,\n  LATERAL (\n    SELECT EXTRACT(EPOCH FROM sum(age(s.end_date, s.start_date))) as sleep\n    FROM states s\n    WHERE\n      state = 'asleep' AND\n      v.start_date <= s.start_date AND s.end_date <= v.end_date AND\n      s.car_id::text = ANY(string_to_array('${car_id:csv}', ','))\n  ) s_asleep,\n  LATERAL (\n    SELECT EXTRACT(EPOCH FROM sum(age(s.end_date, s.start_date))) as sleep\n    FROM states s\n    WHERE\n      state = 'offline' AND\n      v.start_date <= s.start_date AND s.end_date <= v.end_date AND\n      s.car_id::text = ANY(string_to_array('${car_id:csv}', ','))\n  ) s_offline\nJOIN cars c ON c.id::text = ANY(string_to_array('${car_id:csv}', ','))\nWHERE\n  v.duration > (COALESCE(NULLIF('$duration', '')::numeric, 0) * 60 * 60)\n  AND v.start_range - v.end_range >= 0\n  AND v.end_km - v.start_km < 1;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -503,7 +525,7 @@
           }
         }
       ],
-      "title": "Vampire Drain",
+      "title": "停车电量消耗",
       "transformations": [
         {
           "id": "merge",
@@ -517,9 +539,9 @@
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 42,
+  "schemaVersion": 41,
   "tags": [
-    "tesla"
+    "battery"
   ],
   "templating": {
     "list": [
@@ -538,7 +560,6 @@
         "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -547,12 +568,47 @@
           "value": "6"
         },
         "includeAll": false,
-        "label": "min. Idle Time (h)",
+        "label": "最小闲置时间 (h)",
         "name": "duration",
-        "options": [],
+        "options": [
+          {
+            "selected": false,
+            "text": "0",
+            "value": "0"
+          },
+          {
+            "selected": false,
+            "text": "1",
+            "value": "1"
+          },
+          {
+            "selected": false,
+            "text": "3",
+            "value": "3"
+          },
+          {
+            "selected": true,
+            "text": "6",
+            "value": "6"
+          },
+          {
+            "selected": false,
+            "text": "12",
+            "value": "12"
+          },
+          {
+            "selected": false,
+            "text": "18",
+            "value": "18"
+          },
+          {
+            "selected": false,
+            "text": "24",
+            "value": "24"
+          }
+        ],
         "query": "0,1,3,6,12,18,24",
-        "type": "custom",
-        "valuesFormat": "csv"
+        "type": "custom"
       },
       {
         "current": {},
@@ -568,7 +624,6 @@
         "query": "select unit_of_length from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -585,7 +640,6 @@
         "query": "select preferred_range from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -602,7 +656,6 @@
         "query": "select base_url from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       }
     ]
@@ -612,9 +665,8 @@
     "to": "now"
   },
   "timepicker": {},
-  "timezone": "browser",
-  "title": "Vampire Drain",
+  "timezone": "",
+  "title": "停车电量消耗",
   "uid": "zhHx2Fggk",
-  "version": 1,
-  "weekStart": ""
+  "version": 1
 }

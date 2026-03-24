@@ -20,29 +20,41 @@
   "graphTooltip": 1,
   "links": [
     {
-      "icon": "dashboard",
-      "tags": [],
-      "title": "TeslaMate",
-      "tooltip": "",
-      "type": "link",
-      "url": "${base_url:raw}"
-    },
-    {
-      "icon": "",
-      "tags": [],
-      "title": "GpxExport",
-      "tooltip": "",
-      "type": "link",
-      "url": "${base_url:raw}/drive/$drive_id/gpx"
+      "asDropdown": true,
+      "icon": "external link",
+      "tags": [
+        "tesla2"
+      ],
+      "title": "车辆信息",
+      "type": "dashboards"
     },
     {
       "asDropdown": true,
       "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
       "tags": [
-        "tesla"
+        "battery"
       ],
-      "title": "Dashboards",
-      "type": "dashboards"
+      "targetBlank": false,
+      "title": "电池",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    },
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [
+        "trip"
+      ],
+      "targetBlank": false,
+      "title": "行驶",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
     }
   ],
   "panels": [
@@ -80,7 +92,6 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "showValues": false,
             "spanNulls": true,
             "stacking": {
               "group": "A",
@@ -96,8 +107,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "red",
@@ -180,7 +190,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Speed"
+                "value": "速度"
               }
             ]
           },
@@ -200,7 +210,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Power"
+                "value": "功率"
               }
             ]
           },
@@ -212,7 +222,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Battery Heater"
+                "value": "电池加热"
               },
               {
                 "id": "unit",
@@ -232,7 +242,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range (ideal)"
+                "value": "续航里程 (额定)"
               },
               {
                 "id": "min",
@@ -248,7 +258,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range (rated)"
+                "value": "续航里程 (典型)"
               },
               {
                 "id": "min",
@@ -284,7 +294,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Usable SOC"
+                "value": "可用 SOC"
               },
               {
                 "id": "unit",
@@ -304,7 +314,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range (est.)"
+                "value": "里程 (预估)"
               },
               {
                 "id": "custom.axisPlacement",
@@ -463,7 +473,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -473,7 +483,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n\t$__time(date),\n\tconvert_km(speed::numeric, '$length_unit') AS speed_${length_unit}h,\n\tpower,\n\tconvert_km(${preferred_range}_battery_range_km, '$length_unit') AS range_${preferred_range}_${length_unit},\n\tconvert_km(est_battery_range_km, '$length_unit') AS range_estimated_${length_unit},\n\tbattery_level,\n\tusable_battery_level,\n\tbattery_heater::integer\nFROM\n\tpositions\nWHERE\n car_id = $car_id AND\n $__timeFilter(date)\nORDER BY\n\tdate ASC",
+          "rawSql": "SELECT\n\t$__time(date),\n\tconvert_km(speed::numeric, '$length_unit') AS speed_${length_unit}h,\n\tpower,\n\tconvert_km(${preferred_range}_battery_range_km, '$length_unit') AS range_${preferred_range}_${length_unit},\n\tconvert_km(est_battery_range_km, '$length_unit') AS range_estimated_${length_unit},\n\tbattery_level,\n\tusable_battery_level,\n\tbattery_heater::integer\nFROM\n\tpositions\nWHERE\n car_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND\n $__timeFilter(date)\nORDER BY\n\tdate ASC",
           "refId": "A",
           "sql": {
             "columns": [
@@ -494,7 +504,7 @@
           }
         }
       ],
-      "title": "Drive",
+      "title": "行程",
       "type": "timeseries"
     },
     {
@@ -520,8 +530,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               }
             ]
           }
@@ -538,9 +547,11 @@
       "maxDataPoints": 50000,
       "options": {
         "basemap": {
-          "config": {},
-          "name": "Layer 0",
-          "type": "osm-standard"
+          "config": {
+            "url": "https://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=1&x={x}&y={y}&z={z}"
+          },
+          "type": "xyz",
+          "name": "高德地图"
         },
         "controls": {
           "mouseWheelZoom": true,
@@ -551,6 +562,49 @@
           "showZoom": true
         },
         "layers": [
+          {
+            "config": {
+              "showLegend": false,
+              "style": {
+                "color": {
+                  "fixed": "transparent"
+                },
+                "opacity": 0,
+                "rotation": {
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "fixed": 3,
+                  "max": 15,
+                  "min": 2
+                },
+                "symbol": {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed"
+                },
+                "symbolAlign": {
+                  "horizontal": "center",
+                  "vertical": "center"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 0,
+                  "offsetY": 0,
+                  "textAlign": "center",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "name": "Workaround for Grafana Issue #89777, fixed in 11.6.0 via #101391, extra layer to be removed on broad availability of 11.6.0",
+            "tooltip": false,
+            "type": "markers"
+          },
           {
             "config": {
               "arrow": 0,
@@ -606,11 +660,10 @@
           "id": "fit",
           "lat": 0,
           "lon": 0,
-          "noRepeat": false,
           "zoom": 15
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -620,7 +673,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n  $__time(date),\n  latitude,\n  longitude\nFROM positions\nWHERE \n  car_id = $car_id AND \n  $__timeFilter(date)\nORDER BY \n  date ASC",
+          "rawSql": "SELECT\n    $__time(date),\n    gcj_lat AS latitude,\n    gcj_lon AS longitude\nFROM positions\nWHERE\n    car_id::text = ANY(string_to_array('${car_id:csv}', ','))\n    AND $__timeFilter(date)\n    AND gcj_lat IS NOT NULL\n    AND gcj_lon IS NOT NULL\nORDER BY date ASC",
           "refId": "A",
           "sql": {
             "columns": [
@@ -678,7 +731,6 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "showValues": false,
             "spanNulls": true,
             "stacking": {
               "group": "A",
@@ -695,8 +747,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "red",
@@ -773,7 +824,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -783,7 +834,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n\t$__time(date),\n\tROUND(convert_m(elevation, '$alternative_length_unit')) AS elevation_${alternative_length_unit}\nFROM\n\tpositions\nWHERE\n car_id = $car_id AND\n $__timeFilter(date)\nORDER BY\n\tdate ASC",
+          "rawSql": "SELECT\n\t$__time(date),\n\tROUND(convert_m(elevation, '$alternative_length_unit')) AS elevation_${alternative_length_unit}\nFROM\n\tpositions\nWHERE\n car_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND\n $__timeFilter(date)\nORDER BY\n\tdate ASC",
           "refId": "A",
           "sql": {
             "columns": [
@@ -804,7 +855,7 @@
           }
         }
       ],
-      "title": "Elevation",
+      "title": "海拔",
       "type": "timeseries"
     },
     {
@@ -841,7 +892,6 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "showValues": false,
             "spanNulls": true,
             "stacking": {
               "group": "A",
@@ -857,8 +907,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "red",
@@ -938,7 +987,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Outside Temperature"
+                "value": "车外温度"
               }
             ]
           },
@@ -957,7 +1006,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Inside Temperature"
+                "value": "车内温度"
               }
             ]
           },
@@ -969,7 +1018,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Driver Temperature"
+                "value": "驾驶位温度"
               }
             ]
           },
@@ -981,7 +1030,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Passenger Temperature"
+                "value": "乘客位温度"
               }
             ]
           },
@@ -1013,7 +1062,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Fan status"
+                "value": "风扇状态"
               },
               {
                 "id": "custom.axisPlacement",
@@ -1044,7 +1093,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1054,7 +1103,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n\t$__time(date),\n\tconvert_celsius(outside_temp, '$temp_unit') AS outside_temp_$temp_unit,\n\tconvert_celsius(inside_temp, '$temp_unit') AS inside_temp_$temp_unit,\n\tconvert_celsius(driver_temp_setting, '$temp_unit') as driver_temp_$temp_unit,\n\tconvert_celsius(passenger_temp_setting, '$temp_unit') as passenger_temp_$temp_unit,\n  is_climate_on::integer,\n\tfan_status\nFROM\n\tpositions\nWHERE\n car_id = $car_id AND\n $__timeFilter(date)\nORDER BY\n\tdate ASC",
+          "rawSql": "SELECT\n\t$__time(date),\n\tconvert_celsius(outside_temp, '$temp_unit') AS outside_temp_$temp_unit,\n\tconvert_celsius(inside_temp, '$temp_unit') AS inside_temp_$temp_unit,\n\tconvert_celsius(driver_temp_setting, '$temp_unit') as driver_temp_$temp_unit,\n\tconvert_celsius(passenger_temp_setting, '$temp_unit') as passenger_temp_$temp_unit,\n  is_climate_on::integer,\n\tfan_status\nFROM\n\tpositions\nWHERE\n car_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND\n $__timeFilter(date)\nORDER BY\n\tdate ASC",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1075,7 +1124,7 @@
           }
         }
       ],
-      "title": "Temperatures",
+      "title": "温度",
       "type": "timeseries"
     },
     {
@@ -1115,7 +1164,6 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1131,8 +1179,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1155,7 +1202,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Front Left"
+                "value": "左前"
               }
             ]
           },
@@ -1171,7 +1218,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Front Right"
+                "value": "右前"
               }
             ]
           },
@@ -1187,7 +1234,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Rear Left"
+                "value": "左后"
               }
             ]
           },
@@ -1203,7 +1250,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Rear Right"
+                "value": "右后"
               }
             ]
           },
@@ -1219,7 +1266,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Front Left"
+                "value": "左前"
               }
             ]
           },
@@ -1235,7 +1282,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Front Right"
+                "value": "右前"
               }
             ]
           },
@@ -1251,7 +1298,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Rear Left"
+                "value": "左后"
               }
             ]
           },
@@ -1267,7 +1314,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Rear Right"
+                "value": "右后"
               }
             ]
           }
@@ -1297,7 +1344,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1307,7 +1354,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\r\n    $__time(date),\r\n    convert_tire_pressure(tpms_pressure_fl,'$pressure_unit') AS tpms_pressure_front_left_$pressure_unit,\r\n    convert_tire_pressure(tpms_pressure_fr,'$pressure_unit') AS tpms_pressure_front_right_$pressure_unit,\r\n    convert_tire_pressure(tpms_pressure_rl,'$pressure_unit') AS tpms_pressure_rear_left_$pressure_unit,\r\n    convert_tire_pressure(tpms_pressure_rr,'$pressure_unit') AS tpms_pressure_rear_right_$pressure_unit\r\nFROM\r\n    positions\r\nWHERE\r\n    car_id = $car_id AND\r\n    $__timeFilter(date) AND\r\n    tpms_pressure_fl is not null\r\nORDER BY\r\n    date ASC",
+          "rawSql": "SELECT\r\n    $__time(date),\r\n    convert_tire_pressure(tpms_pressure_fl,'$pressure_unit') AS tpms_pressure_front_left_$pressure_unit,\r\n    convert_tire_pressure(tpms_pressure_fr,'$pressure_unit') AS tpms_pressure_front_right_$pressure_unit,\r\n    convert_tire_pressure(tpms_pressure_rl,'$pressure_unit') AS tpms_pressure_rear_left_$pressure_unit,\r\n    convert_tire_pressure(tpms_pressure_rr,'$pressure_unit') AS tpms_pressure_rear_right_$pressure_unit\r\nFROM\r\n    positions\r\nWHERE\r\n    car_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND\r\n    $__timeFilter(date) AND\r\n    tpms_pressure_fl is not null\r\nORDER BY\r\n    date ASC",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1328,7 +1375,7 @@
           }
         }
       ],
-      "title": "Tire Pressure",
+      "title": "胎压",
       "type": "timeseries"
     },
     {
@@ -1341,7 +1388,7 @@
       },
       "id": 36,
       "panels": [],
-      "title": "More Details",
+      "title": "更多详情",
       "type": "row"
     },
     {
@@ -1349,6 +1396,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "decimals": 2,
@@ -1367,8 +1415,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-blue",
-                "value": 0
+                "color": "super-light-blue"
               }
             ]
           },
@@ -1401,7 +1448,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.5.2",
       "targets": [
         {
           "datasource": {
@@ -1411,7 +1458,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT CONCAT_WS(' - ', round(convert_km(start_km::numeric, '$length_unit')), round(convert_km(end_km::numeric, '$length_unit'))) ||' $length_unit' as \"Odometer\"\r\nFROM drives d\r\nWHERE d.id = $drive_id",
+          "rawSql": "SELECT CONCAT_WS(' - ', round(convert_km(start_km::numeric, '$length_unit')), round(convert_km(end_km::numeric, '$length_unit'))) ||' $length_unit' as \"Odometer\"\r\nFROM drives d\r\nWHERE d.id::text = ANY(string_to_array('${drive_id:csv}', ','))",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1432,7 +1479,7 @@
           }
         }
       ],
-      "title": "Odometer (From - To)",
+      "title": "里程表变化",
       "type": "stat"
     },
     {
@@ -1440,6 +1487,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "decimals": 1,
@@ -1458,8 +1506,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
-                "value": 0
+                "color": "text"
               }
             ]
           },
@@ -1492,7 +1539,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.5.2",
       "targets": [
         {
           "datasource": {
@@ -1502,7 +1549,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT ((DATE_PART('day', end_date - start_date) * 24 + \n                DATE_PART('hour', end_date - start_date)) * 60 +\n                DATE_PART('minute', end_date - start_date)) * 60 +\n                DATE_PART('second', end_date - start_date) as sec_diff\nFROM drives\nWHERE drives.id = $drive_id;",
+          "rawSql": "SELECT ((DATE_PART('day', end_date - start_date) * 24 + \n                DATE_PART('hour', end_date - start_date)) * 60 +\n                DATE_PART('minute', end_date - start_date)) * 60 +\n                DATE_PART('second', end_date - start_date) as sec_diff\nFROM drives\nWHERE drives.id::text = ANY(string_to_array('${drive_id:csv}', ','));",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1523,7 +1570,7 @@
           }
         }
       ],
-      "title": "Drive Duration",
+      "title": "驾驶时长",
       "type": "stat"
     },
     {
@@ -1531,6 +1578,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1542,8 +1590,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
-                "value": 0
+                "color": "text"
               }
             ]
           },
@@ -1575,7 +1622,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.5.2",
       "targets": [
         {
           "datasource": {
@@ -1606,7 +1653,7 @@
           }
         }
       ],
-      "title": "Selected Duration",
+      "title": "选择的时长",
       "type": "stat"
     },
     {
@@ -1614,6 +1661,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1649,8 +1697,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-green",
-                "value": 0
+                "color": "super-light-green"
               }
             ]
           }
@@ -1707,7 +1754,7 @@
         "xTickLabelRotation": 0,
         "xTickLabelSpacing": 0
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.5.2",
       "targets": [
         {
           "datasource": {
@@ -1717,7 +1764,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \r\n    speed_section_$length_unit AS \"Speed\",\r\n    SUM(seconds_elapsed) * 100 / MAX(duration) as \"Elapsed\",\r\n    TO_CHAR((SUM(seconds_elapsed) || ' second')::interval, 'HH24:MI:SS') AS \"Time\"\r\nFROM (\r\n    SELECT\r\n        ROUND(convert_km(p.speed::numeric, '$length_unit') / 10,0) * 10 AS speed_section_$length_unit,\r\n        EXTRACT(EPOCH FROM (LEAD(p.\"date\") OVER (ORDER BY p.\"date\") - p.\"date\")) AS seconds_elapsed,\r\n        EXTRACT(EPOCH FROM (end_date - start_date)) AS duration\r\n    FROM drives d\r\n    INNER JOIN positions p ON p.drive_id = d.id\r\n    WHERE d.id = $drive_id\r\n) AS drivedata\r\nWHERE speed_section_$length_unit>0\r\nGROUP BY 1\r\nORDER BY 1",
+          "rawSql": "SELECT \r\n    speed_section_$length_unit AS \"Speed\",\r\n    SUM(seconds_elapsed) * 100 / MAX(duration) as \"Elapsed\",\r\n    TO_CHAR((SUM(seconds_elapsed) || ' second')::interval, 'HH24:MI:SS') AS \"Time\"\r\nFROM (\r\n    SELECT\r\n        ROUND(convert_km(p.speed::numeric, '$length_unit') / 10,0) * 10 AS speed_section_$length_unit,\r\n        EXTRACT(EPOCH FROM (LEAD(p.\"date\") OVER (ORDER BY p.\"date\") - p.\"date\")) AS seconds_elapsed,\r\n        EXTRACT(EPOCH FROM (end_date - start_date)) AS duration\r\n    FROM drives d\r\n    INNER JOIN positions p ON p.drive_id = d.id\r\n    WHERE d.id::text = ANY(string_to_array('${drive_id:csv}', ','))\r\n) AS drivedata\r\nWHERE speed_section_$length_unit>0\r\nGROUP BY 1\r\nORDER BY 1",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1738,7 +1785,7 @@
           }
         }
       ],
-      "title": "Speed Histogram ($speed_unit)",
+      "title": "速度直方图 ($speed_unit)",
       "transformations": [
         {
           "id": "filterFieldsByName",
@@ -1761,10 +1808,11 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "decimals": 2,
-          "displayName": "Distance",
+          "displayName": "行驶里程",
           "mappings": [
             {
               "options": {
@@ -1780,8 +1828,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "semi-dark-green",
-                "value": 0
+                "color": "semi-dark-green"
               }
             ]
           },
@@ -1839,7 +1886,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.5.0",
       "targets": [
         {
           "datasource": {
@@ -1849,7 +1896,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "select convert_km(distance::numeric, '$length_unit') as \"$length_unit\" from drives where id = $drive_id;",
+          "rawSql": "select convert_km(distance::numeric, '$length_unit') as \"$length_unit\" from drives where id::text = ANY(string_to_array('${drive_id:csv}', ','));",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1870,7 +1917,7 @@
           }
         }
       ],
-      "title": "Distance driven",
+      "title": "行驶里程",
       "type": "stat"
     },
     {
@@ -1888,8 +1935,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               }
             ]
           }
@@ -1921,7 +1967,7 @@
         "textMode": "value_and_name",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.5.0",
       "targets": [
         {
           "datasource": {
@@ -1931,7 +1977,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH height as (SELECT\n\televation-LAG(elevation,1) over ( order BY\n\tdate ASC ) as diff\nFROM\n\tpositions\nWHERE\n car_id = $car_id AND\n $__timeFilter(date)\nORDER BY\n\tdate ASC\n\t)\nSELECT  ROUND(convert_m(sum(diff), '$alternative_length_unit')::numeric,0) || ' $alternative_length_unit'  as \"UP\" from height where diff > 0",
+          "rawSql": "WITH height as (SELECT\n\televation-LAG(elevation,1) over ( order BY\n\tdate ASC ) as diff\nFROM\n\tpositions\nWHERE\n car_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND\n $__timeFilter(date)\nORDER BY\n\tdate ASC\n\t)\nSELECT  ROUND(convert_m(sum(diff), '$alternative_length_unit')::numeric,0) || ' $alternative_length_unit'  as \"UP\" from height where diff > 0",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1959,7 +2005,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH height as (SELECT\n\televation-LAG(elevation,1) over ( order BY\n\tdate ASC ) as diff\nFROM\n\tpositions\nWHERE\n car_id = $car_id AND\n $__timeFilter(date)\nORDER BY\n\tdate ASC\n\t)\nSELECT ROUND(convert_m(sum(diff), '$alternative_length_unit')::numeric,0) || ' $alternative_length_unit' as \"DOWN\" from height where diff < 0",
+          "rawSql": "WITH height as (SELECT\n\televation-LAG(elevation,1) over ( order BY\n\tdate ASC ) as diff\nFROM\n\tpositions\nWHERE\n car_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND\n $__timeFilter(date)\nORDER BY\n\tdate ASC\n\t)\nSELECT ROUND(convert_m(sum(diff), '$alternative_length_unit')::numeric,0) || ' $alternative_length_unit' as \"DOWN\" from height where diff < 0",
           "refId": "B",
           "sql": {
             "columns": [
@@ -1980,7 +2026,7 @@
           }
         }
       ],
-      "title": "Elevation Summary",
+      "title": "海拔变化",
       "type": "stat"
     },
     {
@@ -2006,8 +2052,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "light-yellow",
-                "value": 0
+                "color": "light-yellow"
               }
             ]
           },
@@ -2040,7 +2085,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.5.0",
       "targets": [
         {
           "datasource": {
@@ -2050,7 +2095,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n\t(start_${preferred_range}_range_km - end_${preferred_range}_range_km) * car.efficiency\nFROM\n\tdrives d\nJOIN cars car ON car.id = car_id\nWHERE\n\td.id = $drive_id;",
+          "rawSql": "SELECT\n\t(NULLIF(GREATEST(start_${preferred_range}_range_km - end_${preferred_range}_range_km, 0), 0) * car.efficiency)\nFROM\n\tdrives d\nJOIN cars car ON car.id = car_id\nWHERE\n\td.id::text = ANY(string_to_array('${drive_id:csv}', ','));",
           "refId": "A",
           "sql": {
             "columns": [
@@ -2071,7 +2116,7 @@
           }
         }
       ],
-      "title": "Energy consumed (net)",
+      "title": "净能耗",
       "type": "stat"
     },
     {
@@ -2079,7 +2124,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
-      "description": "Shows how much energy has been recovered through regenerative braking.\n\n\"Energy recovered\" is already included in \"Energy consumed (net)\" and is determined by looking for periods with negative power within your drive. \n\nRequires Streaming API to be enabled and available for this drive.",
+      "description": "显示通过再生制动回收了多少能量。\n\n\"“回收的能量” 已经包含在“净能耗” 中，并通过识别行驶过程中功率为负的时段来确定。 \n\n此功能需要启用并可用的 Streaming API 才能使用.",
       "fieldConfig": {
         "defaults": {
           "decimals": 2,
@@ -2098,8 +2143,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "light-yellow",
-                "value": 0
+                "color": "light-yellow"
               }
             ]
           },
@@ -2132,7 +2176,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.5.0",
       "targets": [
         {
           "datasource": {
@@ -2163,7 +2207,7 @@
           }
         }
       ],
-      "title": "Energy recovered",
+      "title": "能量回收",
       "type": "stat"
     },
     {
@@ -2182,8 +2226,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "yellow",
@@ -2248,7 +2291,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.5.0",
       "targets": [
         {
           "datasource": {
@@ -2258,7 +2301,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "select\n\t(start_${preferred_range}_range_km - end_${preferred_range}_range_km) * car.efficiency * 1000 /\n\t  convert_km(distance::numeric, '$length_unit') as \"$length_unit\"\nfrom drives d\nJOIN cars car ON car.id = car_id\nwhere d.id = $drive_id;",
+          "rawSql": "select\n\t(NULLIF(GREATEST(start_${preferred_range}_range_km - end_${preferred_range}_range_km, 0), 0) * car.efficiency) *1000 /\n\t  convert_km(distance::numeric, '$length_unit') as \"$length_unit\"\nfrom drives d\nJOIN cars car ON car.id = car_id\nwhere d.id::text = ANY(string_to_array('${drive_id:csv}', ','));",
           "refId": "A",
           "sql": {
             "columns": [
@@ -2279,7 +2322,7 @@
           }
         }
       ],
-      "title": "Consumption (net)",
+      "title": "能耗（行驶）",
       "type": "stat"
     },
     {
@@ -2287,6 +2330,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2299,8 +2343,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               }
             ]
           }
@@ -2356,7 +2399,7 @@
         "textMode": "value",
         "wideLayout": false
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.5.0",
       "targets": [
         {
           "datasource": {
@@ -2366,7 +2409,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n\tconvert_km(avg(speed)::numeric, '$length_unit') AS speed_${length_unit}h\nFROM positions\nWHERE car_id = $car_id AND $__timeFilter(date)",
+          "rawSql": "SELECT\n\tconvert_km(avg(speed)::numeric, '$length_unit') AS speed_${length_unit}h\nFROM positions\nWHERE car_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND $__timeFilter(date)",
           "refId": "A",
           "sql": {
             "columns": [
@@ -2387,12 +2430,12 @@
           }
         }
       ],
-      "title": "Ø Speed",
+      "title": "平均速度",
       "type": "stat"
     }
   ],
   "preload": false,
-  "schemaVersion": 42,
+  "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": [
@@ -2427,7 +2470,6 @@
         "query": "select unit_of_temperature from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -2444,7 +2486,6 @@
         "query": "select unit_of_length from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -2461,7 +2502,6 @@
         "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -2478,7 +2518,6 @@
         "query": "select case when unit_of_length = 'km' then 'm' when unit_of_length = 'mi' then 'ft' end  from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -2495,7 +2534,6 @@
         "query": "select preferred_range from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -2512,7 +2550,6 @@
         "query": "select base_url from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -2529,7 +2566,6 @@
         "query": "select unit_of_pressure from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -2546,7 +2582,6 @@
         "query": "SELECT  CASE WHEN '$length_unit' = 'km' THEN 'km/h' WHEN '$length_unit' = 'mi' THEN 'mph' END",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       }
     ]
@@ -2558,9 +2593,8 @@
   "timepicker": {
     "refresh_intervals": []
   },
-  "timezone": "browser",
-  "title": "Drive Details",
-  "uid": "zm7wN6Zgz",
-  "version": 1,
-  "weekStart": ""
+  "timezone": "",
+  "title": "行程详情",
+  "uid": "am7wN6Zgz",
+  "version": 1
 }

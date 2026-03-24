@@ -20,21 +20,41 @@
   "graphTooltip": 0,
   "links": [
     {
-      "icon": "dashboard",
-      "tags": [],
-      "title": "TeslaMate",
-      "tooltip": "",
-      "type": "link",
-      "url": "${base_url:raw}"
+      "asDropdown": true,
+      "icon": "external link",
+      "tags": [
+        "tesla2"
+      ],
+      "title": "车辆信息",
+      "type": "dashboards"
     },
     {
       "asDropdown": true,
       "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
       "tags": [
-        "tesla"
+        "battery"
       ],
-      "title": "Dashboards",
-      "type": "dashboards"
+      "targetBlank": false,
+      "title": "电池",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    },
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [
+        "trip"
+      ],
+      "targetBlank": false,
+      "title": "行驶",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
     }
   ],
   "panels": [
@@ -49,7 +69,7 @@
       "id": 4,
       "panels": [],
       "repeat": "car_id",
-      "title": "$car_id",
+      "title": "车辆：$car_id",
       "type": "row"
     },
     {
@@ -74,8 +94,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "dark-red",
-                "value": 0
+                "color": "dark-red"
               }
             ]
           }
@@ -92,9 +111,11 @@
       "maxDataPoints": 10000000,
       "options": {
         "basemap": {
-          "config": {},
-          "name": "Layer 0",
-          "type": "osm-standard"
+          "config": {
+            "url": "https://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=1&x={x}&y={y}&z={z}"
+          },
+          "type": "xyz",
+          "name": "高德地图"
         },
         "controls": {
           "mouseWheelZoom": true,
@@ -105,6 +126,49 @@
           "showZoom": true
         },
         "layers": [
+          {
+            "config": {
+              "showLegend": false,
+              "style": {
+                "color": {
+                  "fixed": "transparent"
+                },
+                "opacity": 0,
+                "rotation": {
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "fixed": 3,
+                  "max": 15,
+                  "min": 2
+                },
+                "symbol": {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed"
+                },
+                "symbolAlign": {
+                  "horizontal": "center",
+                  "vertical": "center"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 0,
+                  "offsetY": 0,
+                  "textAlign": "center",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "name": "Workaround for Grafana Issue #89777, fixed in 11.6.0 via #101391, extra layer to be removed on broad availability of 11.6.0",
+            "tooltip": false,
+            "type": "markers"
+          },
           {
             "config": {
               "arrow": 0,
@@ -160,11 +224,10 @@
           "id": "fit",
           "lat": 0,
           "lon": 0,
-          "noRepeat": false,
           "zoom": 15
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -174,7 +237,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  date_trunc('minute', timezone('UTC', date), '$__timezone') as time,\n  avg(latitude) as latitude,\n  avg(longitude) as longitude\nFROM\n  positions\nWHERE\n  car_id = $car_id AND $__timeFilter(date) and ideal_battery_range_km is not null\nGROUP BY 1\nORDER BY 1",
+          "rawSql": "SELECT\n    date_trunc('minute', timezone('UTC', date), '$__timezone') AS time,\n    avg(gcj_lat) AS latitude,\n    avg(gcj_lon) AS longitude\nFROM\n    positions\nWHERE\n    car_id::text = ANY(string_to_array('${car_id:csv}', ','))\n    AND $__timeFilter(date)\n    AND ideal_battery_range_km IS NOT NULL\n    AND gcj_lat IS NOT NULL\n    AND gcj_lon IS NOT NULL\nGROUP BY 1\nORDER BY 1",
           "refId": "Positions",
           "sql": {
             "columns": [
@@ -203,6 +266,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -213,8 +277,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "super-light-blue",
-                "value": 0
+                "color": "super-light-blue"
               }
             ]
           }
@@ -245,7 +308,7 @@
         "textMode": "value_and_name",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -255,7 +318,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT ROUND(convert_km((max(end_km) - min(start_km))::numeric, '$length_unit'),0)|| ' $length_unit' as \"Mileage\"\nFROM drives WHERE car_id = $car_id AND $__timeFilter(start_date)",
+          "rawSql": "SELECT ROUND(convert_km((max(end_km) - min(start_km))::numeric, '$length_unit'),0)|| ' $length_unit' as \"里程\"\nFROM drives WHERE car_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND $__timeFilter(start_date)",
           "refId": "distance traveled",
           "sql": {
             "columns": [
@@ -284,6 +347,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -294,12 +358,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
+                "color": "light-yellow"
               }
             ]
           }
@@ -308,7 +367,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Total Energy added"
+              "options": "总电量增加"
             },
             "properties": [
               {
@@ -320,7 +379,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Total Energy used"
+              "options": "总电量消耗"
             },
             "properties": [
               {
@@ -332,7 +391,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Charging Efficiency"
+              "options": "充电效率"
             },
             "properties": [
               {
@@ -353,6 +412,11 @@
       "maxDataPoints": 100,
       "options": {
         "colorMode": "value",
+        "fieldOptions": {
+          "calcs": [
+            "mean"
+          ]
+        },
         "graphMode": "none",
         "justifyMode": "center",
         "orientation": "vertical",
@@ -362,13 +426,13 @@
             "mean"
           ],
           "fields": "",
-          "values": false
+          "values": true
         },
         "showPercentChange": false,
         "textMode": "value_and_name",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -378,7 +442,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n\tsum(charge_energy_added) as \"Total Energy added\",\n\tSUM(greatest(charge_energy_added, charge_energy_used)) AS \"Total Energy used\",\n\tSUM(charge_energy_added) * 100 / SUM(greatest(charge_energy_added, charge_energy_used)) AS \"Charging Efficiency\"\nFROM\n\tcharging_processes\nWHERE\n\tcar_id = $car_id AND $__timeFilter(start_date) AND charge_energy_added > 0.01",
+          "rawSql": "SELECT\n\tsum(charge_energy_added) as \"Total Energy added\",\n\tSUM(greatest(charge_energy_added, charge_energy_used)) AS \"Total Energy used\",\n\tSUM(charge_energy_added) * 100 / SUM(greatest(charge_energy_added, charge_energy_used)) AS \"Charging Efficiency\"\nFROM\n\tcharging_processes\nWHERE\n\tcar_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND $__timeFilter(start_date) AND charge_energy_added > 0.01",
           "refId": "A",
           "sql": {
             "columns": [
@@ -407,20 +471,26 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "decimals": 2,
-          "mappings": [],
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
+                "color": "#c7d0d9"
               }
             ]
           }
@@ -437,6 +507,11 @@
       "maxDataPoints": 100,
       "options": {
         "colorMode": "value",
+        "fieldOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "horizontal",
@@ -446,13 +521,13 @@
             "lastNotNull"
           ],
           "fields": "",
-          "values": false
+          "values": true
         },
         "showPercentChange": false,
         "textMode": "value_and_name",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -462,7 +537,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "select sum(cost) as \"Total Charging Cost\" from charging_processes where $__timeFilter(start_date) AND car_id = $car_id;",
+          "rawSql": "select sum(cost) as \"总充电费用\" from charging_processes where $__timeFilter(start_date) AND car_id::text = ANY(string_to_array('${car_id:csv}', ','));",
           "refId": "A",
           "sql": {
             "columns": [
@@ -489,9 +564,9 @@
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 42,
+  "schemaVersion": 41,
   "tags": [
-    "tesla"
+    "trip"
   ],
   "templating": {
     "list": [
@@ -510,7 +585,6 @@
         "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -527,7 +601,6 @@
         "query": "select base_url from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -544,7 +617,6 @@
         "query": "SELECT unit_of_length FROM settings LIMIT 1",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       }
     ]
@@ -554,9 +626,8 @@
     "to": "now"
   },
   "timepicker": {},
-  "timezone": "browser",
-  "title": "Visited",
+  "timezone": "",
+  "title": "足迹地图",
   "uid": "RG_DxSmgk",
-  "version": 1,
-  "weekStart": ""
+  "version": 1
 }

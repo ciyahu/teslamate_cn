@@ -20,21 +20,41 @@
   "graphTooltip": 0,
   "links": [
     {
-      "icon": "dashboard",
-      "tags": [],
-      "title": "TeslaMate",
-      "tooltip": "",
-      "type": "link",
-      "url": "${base_url:raw}"
+      "asDropdown": true,
+      "icon": "external link",
+      "tags": [
+        "tesla2"
+      ],
+      "title": "车辆信息",
+      "type": "dashboards"
     },
     {
       "asDropdown": true,
       "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
       "tags": [
-        "tesla"
+        "battery"
       ],
-      "title": "Dashboards",
-      "type": "dashboards"
+      "targetBlank": false,
+      "title": "电池",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    },
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [
+        "trip"
+      ],
+      "targetBlank": false,
+      "title": "行驶",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
     }
   ],
   "panels": [
@@ -48,7 +68,7 @@
       },
       "id": 16,
       "panels": [],
-      "title": "Summary of this period",
+      "title": "当前周期概览",
       "type": "row"
     },
     {
@@ -76,8 +96,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
-                "value": 0
+                "color": "text"
               }
             ]
           },
@@ -92,7 +111,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Total Energy added:"
+                "value": "总充电量:"
               }
             ]
           }
@@ -123,7 +142,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -175,8 +194,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
-                "value": 0
+                "color": "text"
               }
             ]
           },
@@ -191,7 +209,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Total Energy used:"
+                "value": "总消耗电量:"
               }
             ]
           }
@@ -222,7 +240,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -275,8 +293,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
-                "value": 0
+                "color": "text"
               }
             ]
           },
@@ -291,7 +308,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Total Charging Cost:"
+                "value": "总充电费用:"
               }
             ]
           }
@@ -322,7 +339,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -354,6 +371,7 @@
         "type": "datasource",
         "uid": "-- Dashboard --"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -375,8 +393,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
-                "value": 0
+                "color": "text"
               }
             ]
           },
@@ -391,7 +408,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Duration:"
+                "value": "平均充电时长:"
               }
             ]
           }
@@ -422,7 +439,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -466,9 +483,6 @@
               "type": "auto"
             },
             "filterable": false,
-            "footer": {
-              "reducers": []
-            },
             "inspect": false,
             "minWidth": 150
           },
@@ -478,8 +492,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "red",
@@ -497,7 +510,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Date"
+                "value": "时间"
               },
               {
                 "id": "links",
@@ -505,7 +518,7 @@
                   {
                     "targetBlank": false,
                     "title": "View charge details",
-                    "url": "/d/BHhxFeZRz/charge-details?from=${__data.fields.start_date_ts.numeric}&to=${__data.fields.end_date_ts.numeric}&var-car_id=${__data.fields.car_id.numeric}&var-charging_process_id=${__data.fields.id.numeric}"
+                    "url": "/d/wemate_BHhxFeZRz/charge-details?from=${__data.fields.start_date_ts.numeric}&to=${__data.fields.end_date_ts.numeric}&var-car_id=${__data.fields.car_id.numeric}&var-charging_process_id=${__data.fields.id.numeric}"
                   }
                 ]
               },
@@ -527,7 +540,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Energy added"
+                "value": "充电量"
               },
               {
                 "id": "decimals",
@@ -547,7 +560,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "% Start"
+                "value": "% 起始"
               },
               {
                 "id": "unit",
@@ -571,7 +584,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "% End"
+                "value": "% 结束"
               },
               {
                 "id": "unit",
@@ -595,7 +608,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Duration"
+                "value": "时长"
               },
               {
                 "id": "unit",
@@ -619,7 +632,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Temp"
+                "value": "温度"
               },
               {
                 "id": "unit",
@@ -641,8 +654,7 @@
                   "mode": "absolute",
                   "steps": [
                     {
-                      "color": "#C0D8FF",
-                      "value": 0
+                      "color": "#C0D8FF"
                     },
                     {
                       "color": "#C8F2C2",
@@ -669,7 +681,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Cost"
+                "value": "费用"
               },
               {
                 "id": "decimals",
@@ -702,7 +714,7 @@
             },
             "properties": [
               {
-                "id": "custom.hideFrom.viz",
+                "id": "custom.hidden",
                 "value": true
               }
             ]
@@ -714,7 +726,7 @@
             },
             "properties": [
               {
-                "id": "custom.hideFrom.viz",
+                "id": "custom.hidden",
                 "value": true
               }
             ]
@@ -727,7 +739,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Location"
+                "value": "位置"
               },
               {
                 "id": "links",
@@ -753,7 +765,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range gained"
+                "value": "行驶里程 (km)"
               },
               {
                 "id": "decimals",
@@ -801,7 +813,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Power"
+                "value": "平均功率"
               },
               {
                 "id": "unit",
@@ -823,8 +835,7 @@
                   "mode": "absolute",
                   "steps": [
                     {
-                      "color": "#96D98D",
-                      "value": 0
+                      "color": "#96D98D"
                     },
                     {
                       "color": "#56A64B",
@@ -851,7 +862,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Charge rate"
+                "value": "平均充电速度"
               },
               {
                 "id": "unit",
@@ -875,7 +886,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Temp"
+                "value": "温度"
               },
               {
                 "id": "unit",
@@ -901,8 +912,7 @@
                   "mode": "absolute",
                   "steps": [
                     {
-                      "color": "super-light-blue",
-                      "value": 0
+                      "color": "super-light-blue"
                     },
                     {
                       "color": "super-light-green",
@@ -925,7 +935,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Charge rate"
+                "value": "平均充电速率"
               },
               {
                 "id": "unit",
@@ -948,7 +958,7 @@
             },
             "properties": [
               {
-                "id": "custom.hideFrom.viz",
+                "id": "custom.hidden",
                 "value": true
               }
             ]
@@ -961,7 +971,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Energy used"
+                "value": "消耗电量"
               },
               {
                 "id": "decimals",
@@ -981,7 +991,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Efficiency"
+                "value": "效率"
               },
               {
                 "id": "unit",
@@ -1021,7 +1031,7 @@
             },
             "properties": [
               {
-                "id": "custom.hideFrom.viz",
+                "id": "custom.hidden",
                 "value": true
               }
             ]
@@ -1033,7 +1043,7 @@
             },
             "properties": [
               {
-                "id": "custom.hideFrom.viz",
+                "id": "custom.hidden",
                 "value": true
               }
             ]
@@ -1046,7 +1056,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Cost / kWh"
+                "value": "电价"
               },
               {
                 "id": "decimals",
@@ -1165,10 +1175,18 @@
       "id": 6,
       "options": {
         "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1178,7 +1196,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH data AS (\n    SELECT\n        floor(extract(epoch FROM start_date)) * 1000 AS start_date_ts,\n        ceil(extract(epoch FROM end_date)) * 1000 AS end_date_ts,\n        start_date,\n        end_date,\n        CONCAT_WS(', ', COALESCE(addresses.name, nullif(CONCAT_WS(' ', addresses.road, addresses.house_number), '')), addresses.city) AS address,\n        g.name as geofence_name,\n        g.id as geofence_id,\n        p.latitude,\n        p.longitude,\n        cp.charge_energy_added,\n        cp.charge_energy_used,\n        duration_min,\n        start_battery_level,\n        end_battery_level,\n        end_${preferred_range}_range_km - start_${preferred_range}_range_km as range_added,\n        outside_temp_avg,\n        cp.id,\n        p.odometer - lag(p.odometer) OVER (ORDER BY start_date) AS distance,\n        cars.efficiency,\n        cp.car_id,\n        cost,\n        max(c.charger_voltage) as max_charger_voltage,\n        CASE WHEN NULLIF(mode() within group (order by charger_phases),0) is null THEN 'DC' ELSE 'AC' END AS charge_type,\n        p.odometer as odometer\n    FROM\n        charging_processes cp\n\tLEFT JOIN charges c ON cp.id = c.charging_process_id\n    LEFT JOIN positions p ON p.id = cp.position_id\n    LEFT JOIN cars ON cars.id = cp.car_id\n    LEFT JOIN addresses ON addresses.id = cp.address_id\n    LEFT JOIN geofences g ON g.id = geofence_id\n    WHERE \n        cp.car_id = $car_id AND\n        $__timeFilter(start_date) AND\n        (cp.charge_energy_added IS NULL OR cp.charge_energy_added > 0) AND\n        ('${geofence:pipe}' = '-1' OR geofence_id in ($geofence))\n    GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, p.odometer\n    ORDER BY\n        start_date\n)\nSELECT\n    start_date_ts,\n    end_date_ts,\n    CASE WHEN geofence_id IS NULL THEN CONCAT('new?lat=', latitude, '&lng=', longitude)\n         WHEN geofence_id IS NOT NULL THEN CONCAT(geofence_id, '/edit')\n    END as path,\n    car_id,\n    id,\n    -- Columns\n    start_date,\n    end_date,\n    COALESCE(geofence_name, address) as address,    \n    charge_type,\n    duration_min,\n    cost,\n    cost / NULLIF(greatest(charge_energy_added, charge_energy_used), 0) as cost_per_kwh,\n    charge_energy_added,\n    greatest(charge_energy_used, charge_energy_added) as charge_energy_used,\n    charge_energy_added / greatest(charge_energy_used, charge_energy_added) as charging_efficiency,\n    convert_celsius(outside_temp_avg, '$temp_unit') AS outside_temp_avg_$temp_unit,\n    charge_energy_added * 60 / NULLIF (duration_min, 0) AS charge_energy_added_per_hour,\n    convert_km(range_added * 60 / NULLIF (duration_min, 0), '$length_unit') AS range_added_per_hour_$length_unit,\n    convert_km(range_added, '$length_unit') AS range_added_$length_unit,\n    start_battery_level,\n    end_battery_level,\n    convert_km(odometer::numeric, '$length_unit') AS odometer_$length_unit\n FROM\n    data\nWHERE\n    (distance >= 0 OR distance IS NULL)\n    AND duration_min >= '$min_duration_min'\n    AND \n        CASE\n            WHEN '$cost' !~ '^[0-9]+$' THEN TRUE \n            ELSE cost >= COALESCE(NULLIF('$cost', '')::NUMERIC, 0) \n        END\n    AND charge_type = ANY(CASE WHEN array_to_string(ARRAY[$charge_type], ',') = 'DC' THEN ARRAY['DC'] WHEN array_to_string(ARRAY[$charge_type], ',') = 'AC' THEN ARRAY['AC'] ELSE ARRAY['DC', 'AC'] END)\n    AND address ILIKE '%$location%'\nORDER BY\n  start_date DESC;",
+          "rawSql": "WITH data AS (\n    SELECT\n        (round(extract(epoch FROM start_date) - 10) * 1000) AS start_date_ts,\n        (round(extract(epoch FROM end_date) + 10) * 1000) AS end_date_ts,\n        start_date,\n        end_date,\n        CONCAT_WS(', ', COALESCE(addresses.name, nullif(CONCAT_WS(' ', addresses.road, addresses.house_number), '')), addresses.city) AS address,\n        g.name as geofence_name,\n        g.id as geofence_id,\n        p.latitude,\n        p.longitude,\n        cp.charge_energy_added,\n        cp.charge_energy_used,\n        duration_min,\n        start_battery_level,\n        end_battery_level,\n        end_${preferred_range}_range_km - start_${preferred_range}_range_km as range_added,\n        outside_temp_avg,\n        cp.id,\n        p.odometer - lag(p.odometer) OVER (ORDER BY start_date) AS distance,\n        cars.efficiency,\n        cp.car_id,\n        cost,\n        max(c.charger_voltage) as max_charger_voltage,\n        CASE WHEN NULLIF(mode() within group (order by charger_phases),0) is null THEN 'DC' ELSE 'AC' END AS charge_type,\n        p.odometer as odometer\n    FROM\n        charging_processes cp\n\tLEFT JOIN charges c ON cp.id = c.charging_process_id\n    LEFT JOIN positions p ON p.id = cp.position_id\n    LEFT JOIN cars ON cars.id = cp.car_id\n    LEFT JOIN addresses ON addresses.id = cp.address_id\n    LEFT JOIN geofences g ON g.id = geofence_id\n    WHERE \n        cp.car_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND\n        $__timeFilter(start_date) AND\n        (cp.charge_energy_added IS NULL OR cp.charge_energy_added > 0) AND\n        ('${geofence:pipe}' = '-1' OR '${geofence:raw}' = '' OR geofence_id::text = ANY(string_to_array('${geofence:csv}', ',')))\n    GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, p.odometer\n    ORDER BY\n        start_date\n)\nSELECT\n    start_date_ts,\n    end_date_ts,\n    CASE WHEN geofence_id IS NULL THEN CONCAT('new?lat=', latitude, '&lng=', longitude)\n         WHEN geofence_id IS NOT NULL THEN CONCAT(geofence_id, '/edit')\n    END as path,\n    car_id,\n    id,\n    -- Columns\n    start_date,\n    end_date,\n    COALESCE(geofence_name, address) as address,    \n    charge_type,\n    duration_min,\n    cost,\n    cost / NULLIF(greatest(charge_energy_added, charge_energy_used), 0) as cost_per_kwh,\n    charge_energy_added,\n    greatest(charge_energy_used, charge_energy_added) as charge_energy_used,\n    charge_energy_added / greatest(charge_energy_used, charge_energy_added) as charging_efficiency,\n    convert_celsius(outside_temp_avg, '$temp_unit') AS outside_temp_avg_$temp_unit,\n    charge_energy_added * 60 / NULLIF (duration_min, 0) AS charge_energy_added_per_hour,\n    convert_km(range_added * 60 / NULLIF (duration_min, 0), '$length_unit') AS range_added_per_hour_$length_unit,\n    convert_km(range_added, '$length_unit') AS range_added_$length_unit,\n    start_battery_level,\n    end_battery_level,\n    convert_km(odometer::numeric, '$length_unit') AS odometer_$length_unit\n FROM\n    data\nWHERE\n    (distance >= 0 OR distance IS NULL)\n    AND duration_min >= COALESCE(NULLIF('$min_duration_min', '')::numeric, 0)\n    AND \n        CASE\n            WHEN '$cost' !~ '^[0-9]+$' THEN TRUE \n            ELSE cost >= COALESCE(NULLIF('$cost', '')::NUMERIC, 0) \n        END\n    AND ('${charge_type:raw}' = '' OR charge_type = ANY(string_to_array('${charge_type:csv}', ',')))\n    AND address ILIKE CONCAT('%', ${location:sqlstring}, '%')\nORDER BY\n  start_date DESC;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1199,7 +1217,7 @@
           }
         }
       ],
-      "title": "Charger type: $charge_type",
+      "title": "充电桩类型: $charge_type",
       "type": "table"
     },
     {
@@ -1212,7 +1230,7 @@
       },
       "id": 18,
       "panels": [],
-      "title": "General information (All charges)",
+      "title": "通用信息 (所有充电)",
       "type": "row"
     },
     {
@@ -1233,10 +1251,10 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "From here you can check if you have \nincomplete data of **Charges** (charges without ending date)\nIf so, you may follow the official \nguide by <a href='https://docs.teslamate.org/docs/maintenance/manually_fixing_data' target='_blank'>Manually fixing data</a>",
+        "content": "从这里您可以检查您的费用数据是否不完整（费用没有结束日期）如果是这样，您可以按照官方指南手动修复数据<a href='https://docs.teslamate.com.cn/docs/maintenance/manually_fixing_data' target='_blank'>手工修复数据</a>",
         "mode": "markdown"
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "title": "",
       "type": "text"
     },
@@ -1245,6 +1263,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1255,9 +1274,6 @@
             "cellOptions": {
               "type": "auto"
             },
-            "footer": {
-              "reducers": []
-            },
             "inspect": false
           },
           "links": [],
@@ -1266,8 +1282,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               }
             ]
           }
@@ -1283,10 +1298,18 @@
       "id": 17,
       "options": {
         "cellHeight": "sm",
-        "enablePagination": true,
+        "footer": {
+          "countRows": false,
+          "enablePagination": true,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1296,7 +1319,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT id as \"Charging Process ID\", start_date, end_date, charge_energy_added, charge_energy_used, start_battery_level, end_battery_level, duration_min\nFROM charging_processes \nWHERE car_id = $car_id AND end_date is null\nORDER BY start_date DESC\n",
+          "rawSql": "SELECT id as \"Charging Process ID\", start_date, end_date, charge_energy_added, charge_energy_used, start_battery_level, end_battery_level, duration_min\nFROM charging_processes \nWHERE car_id::text = ANY(string_to_array('${car_id:csv}', ',')) AND end_date is null\nORDER BY start_date DESC\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1317,15 +1340,15 @@
           }
         }
       ],
-      "title": "Incomplete Charges 🪫",
+      "title": "不完整的充电记录 🪫",
       "type": "table"
     }
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 42,
+  "schemaVersion": 41,
   "tags": [
-    "tesla"
+    "battery"
   ],
   "templating": {
     "list": [
@@ -1343,7 +1366,6 @@
         "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1360,7 +1382,6 @@
         "query": "select unit_of_length from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1377,7 +1398,6 @@
         "query": "select unit_of_temperature from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1394,7 +1414,6 @@
         "query": "select preferred_range from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1411,27 +1430,24 @@
         "query": "select base_url from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
         "allValue": "-1",
-        "allowCustomValue": false,
         "current": {},
         "datasource": {
           "type": "grafana-postgresql-datasource",
           "uid": "TeslaMate"
         },
-        "definition": "-- The \"Include All option\" built into Grafana is not initializing correctly if no value is returned by the SQL query anymore\r\n-- Create the option via SQL as a temporary workaround until fixed (https://github.com/grafana/grafana/issues/119793)\r\n\r\nwith geofences_incl_all_option as (\r\n\r\n  select 'All' as __text, -1 as __value, '_all' as name\r\n\r\n  union all\r\n\r\n  SELECT name AS __text, id AS __value, name from geofences\r\n\r\n)\r\n\r\nSELECT __text, __value from geofences_incl_all_option order by name asc",
-        "includeAll": false,
-        "label": "Geofence",
+        "definition": "SELECT name AS __text, id AS __value FROM geofences ORDER BY name COLLATE \"C\" ASC;",
+        "includeAll": true,
+        "label": "收藏点",
         "multi": true,
         "name": "geofence",
         "options": [],
-        "query": "-- The \"Include All option\" built into Grafana is not initializing correctly if no value is returned by the SQL query anymore\r\n-- Create the option via SQL as a temporary workaround until fixed (https://github.com/grafana/grafana/issues/119793)\r\n\r\nwith geofences_incl_all_option as (\r\n\r\n  select 'All' as __text, -1 as __value, '_all' as name\r\n\r\n  union all\r\n\r\n  SELECT name AS __text, id AS __value, name from geofences\r\n\r\n)\r\n\r\nSELECT __text, __value from geofences_incl_all_option order by name asc",
+        "query": "SELECT name AS __text, id AS __value FROM geofences ORDER BY name COLLATE \"C\" ASC;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1440,7 +1456,7 @@
           "value": ""
         },
         "description": "Type a text contained in Location",
-        "label": "Location",
+        "label": "位置",
         "name": "location",
         "options": [
           {
@@ -1455,20 +1471,30 @@
       {
         "current": {},
         "includeAll": true,
-        "label": "Type",
+        "label": "类型",
         "multi": true,
         "name": "charge_type",
-        "options": [],
+        "options": [
+          {
+            "selected": false,
+            "text": "AC",
+            "value": "AC"
+          },
+          {
+            "selected": false,
+            "text": "DC",
+            "value": "DC"
+          }
+        ],
         "query": "AC, DC",
-        "type": "custom",
-        "valuesFormat": "csv"
+        "type": "custom"
       },
       {
         "current": {
           "text": "",
           "value": ""
         },
-        "label": "Cost >=",
+        "label": "费用大于",
         "name": "cost",
         "options": [
           {
@@ -1485,7 +1511,7 @@
           "text": "0",
           "value": "0"
         },
-        "label": "Duration (minutes) >=",
+        "label": "时长（分）大于",
         "name": "min_duration_min",
         "options": [
           {
@@ -1504,9 +1530,8 @@
     "to": "now"
   },
   "timepicker": {},
-  "timezone": "browser",
-  "title": "Charges",
+  "timezone": "",
+  "title": "充电记录",
   "uid": "TSmNYvRRk",
-  "version": 1,
-  "weekStart": ""
+  "version": 1
 }

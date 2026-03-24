@@ -20,21 +20,41 @@
   "graphTooltip": 0,
   "links": [
     {
-      "icon": "dashboard",
-      "tags": [],
-      "title": "TeslaMate",
-      "tooltip": "",
-      "type": "link",
-      "url": "${base_url:raw}"
+      "asDropdown": true,
+      "icon": "external link",
+      "tags": [
+        "tesla2"
+      ],
+      "title": "车辆信息",
+      "type": "dashboards"
     },
     {
       "asDropdown": true,
       "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
       "tags": [
-        "tesla"
+        "battery"
       ],
-      "title": "Dashboards",
-      "type": "dashboards"
+      "targetBlank": false,
+      "title": "电池",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    },
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [
+        "trip"
+      ],
+      "targetBlank": false,
+      "title": "行驶",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
     }
   ],
   "panels": [
@@ -74,7 +94,6 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -90,8 +109,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "red",
@@ -114,7 +132,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Charging Voltage"
+                "value": "充电电压"
               },
               {
                 "id": "unit",
@@ -150,7 +168,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Power"
+                "value": "功率"
               },
               {
                 "id": "unit",
@@ -170,7 +188,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Battery heater"
+                "value": "电池加热"
               },
               {
                 "id": "unit",
@@ -222,7 +240,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Range"
+                "value": "里程"
               }
             ]
           },
@@ -234,7 +252,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Current"
+                "value": "电流"
               },
               {
                 "id": "unit",
@@ -254,7 +272,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Current (pilot)"
+                "value": "电流 (pilot)"
               },
               {
                 "id": "unit",
@@ -306,7 +324,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Outdoor Temperature"
+                "value": "车外温度"
               }
             ]
           },
@@ -351,7 +369,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -361,7 +379,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n  $__time(date),\n  battery_level,\n  charger_power,\n  (case when battery_heater_on then 10 when battery_heater then 10 else 0 end) as battery_heater,\n  convert_km(${preferred_range}_battery_range_km, '$length_unit') as range_$length_unit,\n  charger_voltage,\n  cast(nullif(${determine_phases:sqlstring}, '') as numeric) as charger_phases,\n  charger_actual_current,\n  charger_pilot_current,\n  convert_celsius(outside_temp, '$temp_unit') outside_temp_$temp_unit\nFROM\n  charges c\njoin\n  charging_processes p ON p.id = c.charging_process_id \nWHERE\n  $__timeFilter(date)\n AND p.car_id = $car_id\nORDER BY\n  date ASC",
+          "rawSql": "SELECT\n  $__time(date),\n  battery_level,\n  charger_power,\n  (case when battery_heater_on then 10 when battery_heater then 10 else 0 end) as battery_heater,\n  convert_km(${preferred_range}_battery_range_km, '$length_unit') as range_$length_unit,\n  charger_voltage,\n  (case when charger_phases = 2 then 3 when charger_phases = 1 then 1 else 0 end) as charger_phases,\n  charger_actual_current,\n  charger_pilot_current,\n  convert_celsius(outside_temp, '$temp_unit') outside_temp_$temp_unit\nFROM\n  charges c\njoin\n  charging_processes p ON p.id = c.charging_process_id \nWHERE\n  $__timeFilter(date)\n AND p.car_id::text = ANY(string_to_array('${car_id:csv}', ','))\nORDER BY\n  date ASC",
           "refId": "A",
           "sql": {
             "columns": [
@@ -382,7 +400,7 @@
           }
         }
       ],
-      "title": "Charge Details",
+      "title": "充电详情",
       "type": "timeseries"
     },
     {
@@ -413,8 +431,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#c7d0d9",
-                "value": 0
+                "color": "#c7d0d9"
               }
             ]
           },
@@ -424,14 +441,14 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 2,
+        "w": 5,
         "x": 13,
         "y": 0
       },
       "id": 6,
       "links": [
         {
-          "title": "Set cost",
+          "title": "设置电价",
           "url": "${base_url:raw}/charge-cost/${charging_process_id}"
         }
       ],
@@ -453,7 +470,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -463,7 +480,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT cost from charging_processes where id = $charging_process_id;",
+          "rawSql": "SELECT cost from charging_processes where id::text = ANY(string_to_array('${charging_process_id:csv}', ','));",
           "refId": "A",
           "sql": {
             "columns": [
@@ -484,131 +501,7 @@
           }
         }
       ],
-      "title": "Cost",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "TeslaMate"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "decimals": 1,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "super-light-blue",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "clocks"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 3,
-        "x": 15,
-        "y": 0
-      },
-      "id": 16,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "sum"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "text": {},
-        "textMode": "value",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.4.0",
-      "targets": [
-        {
-          "alias": "Elapsed Time",
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "TeslaMate"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "group": [],
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "metricColumn": "none",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "rawQuery": true,
-          "rawSql": "SELECT EXTRACT(EPOCH FROM (end_date - start_date)) AS \"Duration\" FROM \r\n  (SELECT min(date) as start_date FROM charges where charging_process_id=$charging_process_id) s\r\n  CROSS JOIN \r\n  (SELECT max(date) as end_date FROM charges where charging_process_id=$charging_process_id) e",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "utc"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              }
-            ]
-          ],
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          },
-          "tags": [],
-          "timeColumn": "time",
-          "where": [
-            {
-              "name": "$__timeFilter",
-              "params": [],
-              "type": "macro"
-            }
-          ]
-        }
-      ],
-      "title": "Duration",
+      "title": "费用",
       "type": "stat"
     },
     {
@@ -636,8 +529,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "red",
@@ -674,7 +566,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -684,7 +576,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  COALESCE(g.name, CONCAT_WS(', ', COALESCE(addresses.name, CONCAT_WS(' ', addresses.road, addresses.house_number)), addresses.city))\nFROM\n\tcharging_processes c\n\tLEFT JOIN addresses ON addresses.id = c.address_id\n\tLEFT JOIN geofences g ON g.id = geofence_id\nWHERE\n\tc.id = $charging_process_id",
+          "rawSql": "SELECT\n  COALESCE(g.name, CONCAT_WS(', ', COALESCE(addresses.name, CONCAT_WS(' ', addresses.road, addresses.house_number)), addresses.city))\nFROM\n\tcharging_processes c\n\tLEFT JOIN addresses ON addresses.id = c.address_id\n\tLEFT JOIN geofences g ON g.id = geofence_id\nWHERE\n\tc.id::text = ANY(string_to_array('${charging_process_id:csv}', ','))",
           "refId": "A",
           "sql": {
             "columns": [
@@ -734,8 +626,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "semi-dark-yellow",
-                "value": 0
+                "color": "semi-dark-yellow"
               }
             ]
           },
@@ -751,6 +642,34 @@
               {
                 "id": "unit",
                 "value": "%"
+              },
+              {
+                "id": "displayName",
+                "value": "能效"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Added"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "充入电量"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Used"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "消耗电量"
               }
             ]
           }
@@ -781,7 +700,7 @@
         "textMode": "value_and_name",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -791,7 +710,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT  coalesce(cp_added, c_added) AS \"Added\"\r\nFROM (SELECT cp.charge_energy_added AS cp_added from charging_processes cp where id = $charging_process_id) cp\r\nCROSS JOIN (SELECT max(charge_energy_added) AS c_added FROM charges WHERE charging_process_id=$charging_process_id) c",
+          "rawSql": "SELECT  coalesce(cp_added, c_added) AS \"Added\"\r\nFROM (SELECT cp.charge_energy_added AS cp_added from charging_processes cp where id::text = ANY(string_to_array('${charging_process_id:csv}', ','))) cp\r\nCROSS JOIN (SELECT max(charge_energy_added) AS c_added FROM charges WHERE charging_process_id::text = ANY(string_to_array('${charging_process_id:csv}', ','))) c",
           "refId": "A",
           "sql": {
             "columns": [
@@ -819,7 +738,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT  charge_energy_used AS \"Used\"\r\nFROM  charging_processes where id = $charging_process_id",
+          "rawSql": "SELECT  charge_energy_used AS \"Used\"\r\nFROM  charging_processes where id::text = ANY(string_to_array('${charging_process_id:csv}', ','))",
           "refId": "B",
           "sql": {
             "columns": [
@@ -847,7 +766,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT  CASE WHEN charge_energy_used IS NULL THEN NULL ELSE LEAST(charge_energy_added / NULLIF(charge_energy_used, 0), 1.0) * 100 END AS \"Efficiency\"\r\nFROM  charging_processes where id = $charging_process_id",
+          "rawSql": "SELECT  CASE WHEN charge_energy_used IS NULL THEN NULL ELSE LEAST(charge_energy_added / NULLIF(charge_energy_used, 0), 1.0) * 100 END AS \"Efficiency\"\r\nFROM  charging_processes where id::text = ANY(string_to_array('${charging_process_id:csv}', ','))",
           "refId": "C",
           "sql": {
             "columns": [
@@ -868,7 +787,7 @@
           }
         }
       ],
-      "title": "Charge Energy",
+      "title": "充电量",
       "type": "stat"
     },
     {
@@ -893,8 +812,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "red",
@@ -915,9 +833,11 @@
       "maxDataPoints": 500,
       "options": {
         "basemap": {
-          "config": {},
-          "name": "Layer 0",
-          "type": "osm-standard"
+          "config": {
+            "url": "https://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=1&x={x}&y={y}&z={z}"
+          },
+          "type": "xyz",
+          "name": "高德地图"
         },
         "controls": {
           "mouseWheelZoom": true,
@@ -986,11 +906,10 @@
           "id": "fit",
           "lat": 0,
           "lon": 0,
-          "noRepeat": false,
           "zoom": 15
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1000,7 +919,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n\t$__time(date),\n\tunnest(ARRAY[latitude, latitude]) AS latitude,\n\tunnest(ARRAY[longitude, longitude]) AS longitude\nFROM\n\tcharging_processes c\n\tJOIN positions p ON c.position_id = p.id\nWHERE\n\t$__timeFilter(date)\n\tAND c.car_id = $car_id;",
+          "rawSql": "SELECT\n    $__time(date),\n    unnest(ARRAY[gcj_lat, gcj_lat]) AS latitude,\n    unnest(ARRAY[gcj_lon, gcj_lon]) AS longitude\nFROM\n    charging_processes c\n    JOIN positions p ON c.position_id = p.id\nWHERE\n    $__timeFilter(date)\n    AND c.car_id::text = ANY(string_to_array('${car_id:csv}', ','))\n    AND gcj_lat IS NOT NULL\n    AND gcj_lon IS NOT NULL",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1050,14 +969,50 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "semi-dark-yellow",
-                "value": 0
+                "color": "semi-dark-yellow"
               }
             ]
           },
           "unit": "%"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Start"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "起始"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Added"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "增加"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "End"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "结束"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 4,
@@ -1084,7 +1039,7 @@
         "textMode": "value_and_name",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1094,7 +1049,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT start_battery_level AS \"Start\" FROM  charging_processes WHERE id=$charging_process_id",
+          "rawSql": "SELECT start_battery_level AS \"Start\" FROM  charging_processes WHERE id::text = ANY(string_to_array('${charging_process_id:csv}', ','))",
           "refId": "Start",
           "sql": {
             "columns": [
@@ -1122,7 +1077,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT end_battery_level - start_battery_level AS \"Added\" FROM  charging_processes WHERE id=$charging_process_id",
+          "rawSql": "SELECT end_battery_level - start_battery_level AS \"Added\" FROM  charging_processes WHERE id::text = ANY(string_to_array('${charging_process_id:csv}', ','))",
           "refId": "Added",
           "sql": {
             "columns": [
@@ -1150,7 +1105,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT end_battery_level AS \"End\" FROM  charging_processes WHERE id=$charging_process_id\r\n",
+          "rawSql": "SELECT end_battery_level AS \"End\" FROM  charging_processes WHERE id::text = ANY(string_to_array('${charging_process_id:csv}', ','))\r\n",
           "refId": "End",
           "sql": {
             "columns": [
@@ -1171,7 +1126,7 @@
           }
         }
       ],
-      "title": "Battery Level",
+      "title": "电池电量",
       "type": "stat"
     },
     {
@@ -1190,8 +1145,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               }
             ]
           },
@@ -1224,7 +1178,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1234,7 +1188,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT $__timeGroupAlias(date,$__interval),\r\navg(\r\n    case when charger_phases >= 1 then\r\n    cast(nullif(${determine_phases:sqlstring}, '') as numeric) * charger_actual_current * charger_voltage / 1000.0 else charger_power end) as \"Power\" \r\nFROM charges WHERE charging_process_id = $charging_process_id\r\nGROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT $__timeGroupAlias(date,$__interval),\r\navg(\r\n    case when charger_phases >= 1 then (\r\n        case when charger_phases = 2 then 3 when charger_phases = 1 then 1 else 0 end)\r\n    * charger_actual_current * charger_voltage / 1000.0 else charger_power end) as \"Power\" \r\nFROM charges WHERE charging_process_id::text = ANY(string_to_array('${charging_process_id:csv}', ','))\r\nGROUP BY 1 ORDER BY 1 ",
           "refId": "Current",
           "sql": {
             "columns": [
@@ -1255,7 +1209,7 @@
           }
         }
       ],
-      "title": "Ø Power",
+      "title": "平均功率",
       "type": "stat"
     },
     {
@@ -1274,8 +1228,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               }
             ]
           }
@@ -1332,7 +1285,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1342,7 +1295,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT $__timeGroupAlias(date,$__interval),\r\nconvert_celsius(avg(outside_temp), '$temp_unit') as outside_temp_$temp_unit \r\nFROM charges WHERE charging_process_id = $charging_process_id\r\nGROUP BY 1 ORDER BY 1 ",
+          "rawSql": "SELECT $__timeGroupAlias(date,$__interval),\r\nconvert_celsius(avg(outside_temp), '$temp_unit') as outside_temp_$temp_unit \r\nFROM charges WHERE charging_process_id::text = ANY(string_to_array('${charging_process_id:csv}', ','))\r\nGROUP BY 1 ORDER BY 1 ",
           "refId": "Current",
           "sql": {
             "columns": [
@@ -1363,7 +1316,7 @@
           }
         }
       ],
-      "title": "Ø Outdoor Temperature",
+      "title": "车外平均温度",
       "type": "stat"
     },
     {
@@ -1371,6 +1324,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1382,8 +1336,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "orange",
-                "value": 0
+                "color": "orange"
               }
             ]
           }
@@ -1421,7 +1374,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Start"
+                "value": "起始"
               }
             ]
           },
@@ -1433,7 +1386,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Added"
+                "value": "增加"
               }
             ]
           },
@@ -1445,7 +1398,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "End"
+                "value": "结束"
               }
             ]
           }
@@ -1476,7 +1429,7 @@
         "textMode": "value_and_name",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1486,7 +1439,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT convert_km(start_${preferred_range}_range_km, '$length_unit') AS start_$length_unit FROM charging_processes WHERE id=$charging_process_id ",
+          "rawSql": "SELECT convert_km(start_${preferred_range}_range_km, '$length_unit') AS start_$length_unit FROM charging_processes WHERE id::text = ANY(string_to_array('${charging_process_id:csv}', ',')) ",
           "refId": "Initial Range",
           "sql": {
             "columns": [
@@ -1514,7 +1467,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT convert_km(end_${preferred_range}_range_km - start_${preferred_range}_range_km, '$length_unit') AS added_$length_unit FROM charging_processes WHERE id=$charging_process_id ",
+          "rawSql": "SELECT convert_km(end_${preferred_range}_range_km - start_${preferred_range}_range_km, '$length_unit') AS added_$length_unit FROM charging_processes WHERE id::text = ANY(string_to_array('${charging_process_id:csv}', ',')) ",
           "refId": "Range Added",
           "sql": {
             "columns": [
@@ -1542,7 +1495,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT convert_km(end_${preferred_range}_range_km, '$length_unit') AS end_$length_unit FROM charging_processes WHERE id=$charging_process_id",
+          "rawSql": "SELECT convert_km(end_${preferred_range}_range_km, '$length_unit') AS end_$length_unit FROM charging_processes WHERE id::text = ANY(string_to_array('${charging_process_id:csv}', ','))",
           "refId": "End Range",
           "sql": {
             "columns": [
@@ -1563,7 +1516,7 @@
           }
         }
       ],
-      "title": "Ranges ($preferred_range)",
+      "title": "续航里程 ($preferred_range)",
       "type": "stat"
     },
     {
@@ -1603,8 +1556,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1708,7 +1660,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1718,7 +1670,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  battery_level as \"SOC [%]\",\n  charger_power as \"Power [kW]\"\nFROM\n  charges c\njoin\n  charging_processes p ON p.id = c.charging_process_id \nWHERE\n  $__timeFilter(date)\n AND p.car_id = $car_id\n AND charger_power > 0\nORDER BY\n  date ASC",
+          "rawSql": "SELECT\n  battery_level as \"SOC [%]\",\n  charger_power as \"Power [kW]\"\nFROM\n  charges c\njoin\n  charging_processes p ON p.id = c.charging_process_id \nWHERE\n  $__timeFilter(date)\n AND p.car_id::text = ANY(string_to_array('${car_id:csv}', ','))\n AND charger_power > 0\nORDER BY\n  date ASC",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1746,7 +1698,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  battery_level as \"SOC [%]\",\n  avg(charger_power) as \"Power [kW]\"\nFROM\n  charges c\njoin\n  charging_processes p ON p.id = c.charging_process_id \nWHERE\n  $__timeFilter(date)\n AND p.car_id = $car_id\n AND charger_power > 0\nGROUP BY\n  battery_level, fast_charger_present\nORDER BY\n  battery_level ASC  ",
+          "rawSql": "SELECT\n  battery_level as \"SOC [%]\",\n  avg(charger_power) as \"Power [kW]\"\nFROM\n  charges c\njoin\n  charging_processes p ON p.id = c.charging_process_id \nWHERE\n  $__timeFilter(date)\n AND p.car_id::text = ANY(string_to_array('${car_id:csv}', ','))\n AND charger_power > 0\nGROUP BY\n  battery_level, fast_charger_present\nORDER BY\n  battery_level ASC  ",
           "refId": "B",
           "sql": {
             "columns": [
@@ -1767,13 +1719,13 @@
           }
         }
       ],
-      "title": "Charging curve",
+      "title": "充电曲线",
       "type": "xychart"
     }
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 42,
+  "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": [
@@ -1808,7 +1760,6 @@
         "query": "select unit_of_temperature from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1825,7 +1776,6 @@
         "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1842,7 +1792,6 @@
         "query": "select unit_of_length from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1859,7 +1808,6 @@
         "query": "select preferred_range from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1876,24 +1824,6 @@
         "query": "select base_url from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
-        "type": "query"
-      },
-      {
-        "allowCustomValue": false,
-        "current": {
-          "text": "2",
-          "value": "2"
-        },
-        "definition": "with data as (\n\n    select\n        avg(c.charger_power * 1000.0 / nullif(c.charger_actual_current * c.charger_voltage, 0)) p,\n        avg(c.charger_phases) r,\n        avg(c.charger_voltage) v,\n        count(*) as n\n    from charges c\n    where c.charging_process_id = ${charging_process_id}\n\n)\n\nselect\n    case\n        when p is not null and p > 0 and n > 15 then case\n            when r = round(p) then r\n            when r = 3 and abs(p / sqrt(r) - 1) <= 0.1 then sqrt(r)\n            when abs(round(p) - p) <= 0.3 then round(p)\n            else null\n        end\n        else null\n    end as phases\nfrom data",
-        "description": "",
-        "hide": 2,
-        "name": "determine_phases",
-        "options": [],
-        "query": "with data as (\n\n    select\n        avg(c.charger_power * 1000.0 / nullif(c.charger_actual_current * c.charger_voltage, 0)) p,\n        avg(c.charger_phases) r,\n        avg(c.charger_voltage) v,\n        count(*) as n\n    from charges c\n    where c.charging_process_id = ${charging_process_id}\n\n)\n\nselect\n    case\n        when p is not null and p > 0 and n > 15 then case\n            when r = round(p) then r\n            when r = 3 and abs(p / sqrt(r) - 1) <= 0.1 then sqrt(r)\n            when abs(round(p) - p) <= 0.3 then round(p)\n            else null\n        end\n        else null\n    end as phases\nfrom data",
-        "refresh": 1,
-        "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       }
     ]
@@ -1903,9 +1833,8 @@
     "to": "now"
   },
   "timepicker": {},
-  "timezone": "browser",
-  "title": "Charge Details",
+  "timezone": "",
+  "title": "充电详情",
   "uid": "BHhxFeZRz",
-  "version": 1,
-  "weekStart": ""
+  "version": 1
 }
