@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(grep -r scrollWheelZoom /c/Users/Administrator/Documents/GitHub/teslamate_cn --include=*.json)",
-      "Bash(grep:*)"
-    ]
-  }
-}
