@@ -101,8 +101,10 @@ import markerShadow from "leaflet/dist/images/marker-shadow.png";
 const icon = new Icon({
   iconUrl: markerIcon,
   shadowUrl: markerShadow,
-  iconAnchor: [12, 40],
-  popupAnchor: [0, -25],
+  iconSize: [50, 82],
+  iconAnchor: [25, 82],
+  shadowSize: [82, 82],
+  popupAnchor: [0, -50],
 });
 
 const DirectionArrow = CircleMarker.extend({
@@ -110,7 +112,7 @@ const DirectionArrow = CircleMarker.extend({
     this._heading = heading;
     CircleMarker.prototype.initialize.call(this, latLng, {
       fillOpacity: 1,
-      radius: 5,
+      radius: 10,
       ...options,
     });
   },
@@ -132,7 +134,7 @@ const DirectionArrow = CircleMarker.extend({
       `translate(${x},${y}) rotate(${this._heading})`,
     );
 
-    const path = this._empty() ? "" : `M0,${3} L-4,${5} L0,${-5} L4,${5} z}`;
+    const path = this._empty() ? "" : `M0,${6} L-8,${10} L0,${-10} L8,${10} z}`;
 
     this._renderer._setPath(this, path);
   },
@@ -270,10 +272,7 @@ function mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $
     center: center,
     zoom: initialZoom,
     baseMap: { type: "vector" },
-    control: {
-      zoom: { position: TMap.constants.CONTROL_POSITION.BOTTOM_RIGHT },
-      rotate: { position: TMap.constants.CONTROL_POSITION.BOTTOM_RIGHT },
-    },
+    control: false,
   });
 
   const marker = new TMap.MultiMarker({
@@ -324,9 +323,9 @@ function mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $
   }
 }
 
-function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, zoomControl) {
+function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $position) {
   const leafletMap = new M(containerId, {
-    zoomControl: zoomControl,
+    zoomControl: false,
     boxZoom: false,
     doubleClickZoom: true,
     keyboard: false,
@@ -357,16 +356,6 @@ function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $
   leafletMap.setView([lat, lng], initialZoom);
   marker.addTo(leafletMap);
 
-  if (leafletMap.zoomControl) {
-    leafletMap.removeControl(leafletMap.zoomControl);
-    leafletMap.on("mouseover", function () {
-      leafletMap.addControl(leafletMap.zoomControl);
-    });
-    leafletMap.on("mouseout", function () {
-      leafletMap.removeControl(leafletMap.zoomControl);
-    });
-  }
-
   if (isArrow) {
     $position.addEventListener("change", () => {
       const [rawLat, rawLng, heading] = $position.value.split(",");
@@ -387,7 +376,6 @@ export const SimpleMap = {
     const initialZoom = Number.parseInt(this.el.dataset.initialZoom ?? "15", 10);
     const containerId = `map_${this.el.dataset.id}`;
     const isArrow = this.el.dataset.marker === "arrow";
-    const zoomControl = !!this.el.dataset.zoom;
 
     const [rawLat, rawLng, heading] = $position.value.split(",");
     const { lat, lng } = wgs84ToGcj02(
@@ -398,7 +386,7 @@ export const SimpleMap = {
     if (window.TENCENT_MAP_ENABLED && window.TMap) {
       mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $position);
     } else {
-      mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, zoomControl);
+      mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $position);
     }
   },
 };

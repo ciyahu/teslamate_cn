@@ -183,6 +183,35 @@
 <.form :let={f} for={@global_settings.changeset} phx-change="change">
   <div class="columns is-mobile is-centered">
     <div class="column">
+      <h2 class="title is-4">地图</h2>
+      <div class="field center-vertically">
+        <div class="control" style="display: flex; align-items: center; gap: 0.5rem;">
+          <%= checkbox(f, :tencent_map_enabled, class: "switch is-rounded is-success") %>
+          <%= label(f, :tencent_map_enabled, "使用更丰富和精准的腾讯地图(需自己申请地图key)") %>
+        </div>
+      </div>
+      <div class="field is-horizontal center-vertically mt-3">
+        <div class="field-label is-normal">
+          <%= label(f, :tencent_map_key, "地图Key", class: "label") %>
+        </div>
+        <div class="field-body">
+          <div class="field">
+            <div class="control">
+              <%= text_input(f, :tencent_map_key,
+                class: "input",
+                phx_debounce: "blur",
+                placeholder: "请输入腾讯地图Key"
+              ) %>
+            </div>
+            <p class="help is-danger"><%= error_tag(f, :tencent_map_key) %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="columns is-mobile is-centered">
+    <div class="column">
       <h2 class="title is-4"><%= gettext("Range") %></h2>
       <div class="field is-horizontal center-vertically">
         <div class="field-label is-normal">
@@ -316,42 +345,6 @@
               </div>
             </div>
             <p class="help is-danger"><%= error_tag(f, :unit_of_pressure) %></p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="columns is-mobile is-centered">
-    <div class="column">
-      <h2 class="title is-4">地图</h2>
-      <div class="field is-horizontal center-vertically">
-        <div class="field-label is-normal is-paddingless">
-          <%= label(f, :tencent_map_enabled, "使用高精度腾讯地图(需自己申请地图Key)", class: "label") %>
-        </div>
-        <div class="field-body">
-          <div class="field">
-            <div class="control">
-              <%= checkbox(f, :tencent_map_enabled, class: "switch is-rounded is-success") %>
-              <%= label(f, :tencent_map_enabled, nil) %>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="field is-horizontal center-vertically">
-        <div class="field-label is-normal">
-          <%= label(f, :tencent_map_key, "地图Key", class: "label") %>
-        </div>
-        <div class="field-body">
-          <div class="field">
-            <div class="control">
-              <%= text_input(f, :tencent_map_key,
-                class: "input",
-                phx_debounce: "blur",
-                placeholder: "请输入腾讯地图Key"
-              ) %>
-            </div>
-            <p class="help is-danger"><%= error_tag(f, :tencent_map_key) %></p>
           </div>
         </div>
       </div>
