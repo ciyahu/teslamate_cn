@@ -287,32 +287,24 @@ export const SimpleMap = {
       },
     });
 
-    const markerStyles = {
-      default: new TMap.MarkerStyle({
-        width: 25,
-        height: 41,
-        anchor: { x: 12, y: 41 },
-      }),
-      arrow: new TMap.MarkerStyle({
-        width: 20,
-        height: 20,
-        anchor: { x: 10, y: 10 },
-        faceTo: "map",
-        src: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
-          '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="-6 -6 12 12">' +
-          '<path d="M0,-5 L-4,5 L0,3 L4,5 Z" fill="#3388ff" stroke="#fff" stroke-width="1"/></svg>'
-        ),
-      }),
-    };
+    const headingVal = Number.parseFloat(heading) || 0;
 
     const marker = new TMap.MultiMarker({
       map: map,
-      styles: markerStyles,
+      styles: {
+        marker: new TMap.MarkerStyle({
+          width: 30,
+          height: 30,
+          anchor: { x: 15, y: 15 },
+          src: "/images/car.png",
+          rotate: headingVal,
+        }),
+      },
       geometries: [{
-        id: "pos",
-        styleId: isArrow ? "arrow" : "default",
+        id: "marker",
+        styleId: "marker",
         position: center,
-        rotation: isArrow ? (Number.parseFloat(heading) || 0) : 0,
+        rotate: headingVal,
       }],
     });
 
@@ -324,11 +316,21 @@ export const SimpleMap = {
           Number.parseFloat(rawLng),
         );
         const newPos = new TMap.LatLng(lat, lng);
+        const newHeading = Number.parseFloat(heading) || 0;
+        marker.setStyles({
+          marker: new TMap.MarkerStyle({
+            width: 30,
+            height: 30,
+            anchor: { x: 15, y: 15 },
+            src: "/images/car.png",
+            rotate: newHeading,
+          }),
+        });
         marker.updateGeometries([{
-          id: "pos",
-          styleId: "arrow",
+          id: "marker",
+          styleId: "marker",
           position: newPos,
-          rotation: Number.parseFloat(heading) || 0,
+          rotate: newHeading,
         }]);
         map.setCenter(newPos);
       };
