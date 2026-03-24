@@ -248,19 +248,137 @@ function createMap(opts) {
   const isDarkMode =
     document.documentElement.getAttribute("data-theme") === "dark";
 
-  const tencent = new TileLayer(
-    "https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={-y}&type=vector&styleid=0",
+  const gaode = new TileLayer(
+    "https://wprd0{s}.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=1&x={x}&y={y}&z={z}",
     {
       maxZoom: 19,
-      subdomains: ["0", "1", "2", "3"],
-      tms: true,
+      subdomains: ["1", "2", "3", "4"],
       className: isDarkMode ? "dark-mode-tiles" : "",
     },
   );
 
-  map.addLayer(tencent);
+  map.addLayer(gaode);
 
   return map;
+}
+
+function mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $position) {
+  const center = new TMap.LatLng(lat, lng);
+  const headingVal = Number.parseFloat(heading) || 0;
+
+  const map = new TMap.Map(containerId, {
+    center: center,
+    zoom: initialZoom,
+    baseMap: { type: "vector" },
+    control: {
+      zoom: { position: TMap.constants.CONTROL_POSITION.BOTTOM_RIGHT },
+      rotate: { position: TMap.constants.CONTROL_POSITION.BOTTOM_RIGHT },
+    },
+  });
+
+  const marker = new TMap.MultiMarker({
+    map: map,
+    styles: {
+      marker: new TMap.MarkerStyle({
+        width: 30,
+        height: 30,
+        anchor: { x: 15, y: 15 },
+        src: "/images/car.png",
+        rotate: headingVal,
+      }),
+    },
+    geometries: [{
+      id: "marker",
+      styleId: "marker",
+      position: center,
+      rotate: headingVal,
+    }],
+  });
+
+  if (isArrow) {
+    $position.addEventListener("change", () => {
+      const [rawLat, rawLng, heading] = $position.value.split(",");
+      const { lat, lng } = wgs84ToGcj02(
+        Number.parseFloat(rawLat),
+        Number.parseFloat(rawLng),
+      );
+      const newPos = new TMap.LatLng(lat, lng);
+      const newHeading = Number.parseFloat(heading) || 0;
+      marker.setStyles({
+        marker: new TMap.MarkerStyle({
+          width: 30,
+          height: 30,
+          anchor: { x: 15, y: 15 },
+          src: "/images/car.png",
+          rotate: newHeading,
+        }),
+      });
+      marker.updateGeometries([{
+        id: "marker",
+        styleId: "marker",
+        position: newPos,
+        rotate: newHeading,
+      }]);
+      map.setCenter(newPos);
+    });
+  }
+}
+
+function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, zoomControl) {
+  const leafletMap = new M(containerId, {
+    zoomControl: zoomControl,
+    boxZoom: false,
+    doubleClickZoom: true,
+    keyboard: false,
+    scrollWheelZoom: true,
+    tap: true,
+    dragging: true,
+    touchZoom: true,
+  });
+
+  const isDarkMode =
+    document.documentElement.getAttribute("data-theme") === "dark";
+
+  const gaode = new TileLayer(
+    "https://wprd0{s}.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=1&x={x}&y={y}&z={z}",
+    {
+      maxZoom: 19,
+      subdomains: ["1", "2", "3", "4"],
+      className: isDarkMode ? "dark-mode-tiles" : "",
+    },
+  );
+
+  leafletMap.addLayer(gaode);
+
+  const marker = isArrow
+    ? new DirectionArrow([lat, lng], heading)
+    : new Marker([lat, lng], { icon });
+
+  leafletMap.setView([lat, lng], initialZoom);
+  marker.addTo(leafletMap);
+
+  if (leafletMap.zoomControl) {
+    leafletMap.removeControl(leafletMap.zoomControl);
+    leafletMap.on("mouseover", function () {
+      leafletMap.addControl(leafletMap.zoomControl);
+    });
+    leafletMap.on("mouseout", function () {
+      leafletMap.removeControl(leafletMap.zoomControl);
+    });
+  }
+
+  if (isArrow) {
+    $position.addEventListener("change", () => {
+      const [rawLat, rawLng, heading] = $position.value.split(",");
+      const { lat, lng } = wgs84ToGcj02(
+        Number.parseFloat(rawLat),
+        Number.parseFloat(rawLng),
+      );
+      marker.setHeading(heading);
+      marker.setLatLng([lat, lng]);
+      leafletMap.setView([lat, lng], leafletMap.getZoom());
+    });
+  }
 }
 
 export const SimpleMap = {
@@ -269,73 +387,18 @@ export const SimpleMap = {
     const initialZoom = Number.parseInt(this.el.dataset.initialZoom ?? "15", 10);
     const containerId = `map_${this.el.dataset.id}`;
     const isArrow = this.el.dataset.marker === "arrow";
+    const zoomControl = !!this.el.dataset.zoom;
 
     const [rawLat, rawLng, heading] = $position.value.split(",");
     const { lat, lng } = wgs84ToGcj02(
       Number.parseFloat(rawLat),
       Number.parseFloat(rawLng),
     );
-    const center = new TMap.LatLng(lat, lng);
 
-    const map = new TMap.Map(containerId, {
-      center: center,
-      zoom: initialZoom,
-      baseMap: { type: "vector" },
-      control: {
-        zoom: { position: TMap.constants.CONTROL_POSITION.BOTTOM_RIGHT },
-        rotate: { position: TMap.constants.CONTROL_POSITION.BOTTOM_RIGHT },
-      },
-    });
-
-    const headingVal = Number.parseFloat(heading) || 0;
-
-    const marker = new TMap.MultiMarker({
-      map: map,
-      styles: {
-        marker: new TMap.MarkerStyle({
-          width: 30,
-          height: 30,
-          anchor: { x: 15, y: 15 },
-          src: "/images/car.png",
-          rotate: headingVal,
-        }),
-      },
-      geometries: [{
-        id: "marker",
-        styleId: "marker",
-        position: center,
-        rotate: headingVal,
-      }],
-    });
-
-    if (isArrow) {
-      const setView = () => {
-        const [rawLat, rawLng, heading] = $position.value.split(",");
-        const { lat, lng } = wgs84ToGcj02(
-          Number.parseFloat(rawLat),
-          Number.parseFloat(rawLng),
-        );
-        const newPos = new TMap.LatLng(lat, lng);
-        const newHeading = Number.parseFloat(heading) || 0;
-        marker.setStyles({
-          marker: new TMap.MarkerStyle({
-            width: 30,
-            height: 30,
-            anchor: { x: 15, y: 15 },
-            src: "/images/car.png",
-            rotate: newHeading,
-          }),
-        });
-        marker.updateGeometries([{
-          id: "marker",
-          styleId: "marker",
-          position: newPos,
-          rotate: newHeading,
-        }]);
-        map.setCenter(newPos);
-      };
-
-      $position.addEventListener("change", setView);
+    if (window.TENCENT_MAP_ENABLED && window.TMap) {
+      mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $position);
+    } else {
+      mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, zoomControl);
     }
   },
 };

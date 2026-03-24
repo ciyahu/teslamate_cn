@@ -55,7 +55,12 @@
         document.documentElement.setAttribute('data-theme', actualTheme);
       })();
     </script>
-    <script src="https://map.qq.com/api/gljs?v=1.exp&key=HBEBZ-K7J64-DVHU7-KWGPB-SK6WV-UFFYJ"></script>
+    <%= if @conn.assigns.settings.tencent_map_enabled && @conn.assigns.settings.tencent_map_key do %>
+      <script src={"https://map.qq.com/api/gljs?v=1.exp&key=#{@conn.assigns.settings.tencent_map_key}"}></script>
+    <% end %>
+    <script>
+      window.TENCENT_MAP_ENABLED = <%= !!(@conn.assigns.settings.tencent_map_enabled && @conn.assigns.settings.tencent_map_key) %>;
+    </script>
     <script
       defer
       phx-track-static
