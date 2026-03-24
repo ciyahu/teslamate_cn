@@ -93,13 +93,14 @@
           </span>
         <% end %>
         <%= unless is_nil(@summary.latitude) or is_nil(@summary.longitude) do %>
-          <%= link to: "https://www.google.com/maps?q=#{@summary.latitude},#{@summary.longitude}",
-                  target: "_blank",
-                  rel: "noopener noreferrer",
-                  class: "icon has-text-inherit has-tooltip-top has-tooltip-left-mobile",
-                  data: [tooltip: gettext("View car location on Google Maps")] do %>
+          <a id={"map_link_#{@car.id}"}
+             href="#"
+             target="_blank"
+             rel="noopener noreferrer"
+             class="icon has-text-inherit has-tooltip-top has-tooltip-left-mobile"
+             data-tooltip="在腾讯地图查看车辆位置">
             <span class="mdi mdi-map-marker"></span>
-          <% end %>
+          </a>
         <% end %>
         <%= if @summary.windows_open do %>
           <span

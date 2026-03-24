@@ -264,7 +264,14 @@ function createMap(opts) {
   return map;
 }
 
-function mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $position) {
+function updateMapLink(carId, lat, lng) {
+  const link = document.getElementById(`map_link_${carId}`);
+  if (link) {
+    link.href = `https://apis.map.qq.com/uri/v1/marker?marker=coord:${lat},${lng};title:车辆位置;addr:车辆位置&referer=TeslaMate`;
+  }
+}
+
+function mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, carId) {
   const center = new TMap.LatLng(lat, lng);
   const headingVal = Number.parseFloat(heading) || 0;
 
@@ -294,6 +301,8 @@ function mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $
     }],
   });
 
+  updateMapLink(carId, lat, lng);
+
   if (isArrow) {
     $position.addEventListener("change", () => {
       const [rawLat, rawLng, heading] = $position.value.split(",");
@@ -319,11 +328,12 @@ function mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $
         rotate: newHeading,
       }]);
       map.setCenter(newPos);
+      updateMapLink(carId, lat, lng);
     });
   }
 }
 
-function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $position) {
+function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, carId) {
   const leafletMap = new M(containerId, {
     zoomControl: false,
     boxZoom: false,
@@ -356,6 +366,8 @@ function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $
   leafletMap.setView([lat, lng], initialZoom);
   marker.addTo(leafletMap);
 
+  updateMapLink(carId, lat, lng);
+
   if (isArrow) {
     $position.addEventListener("change", () => {
       const [rawLat, rawLng, heading] = $position.value.split(",");
@@ -366,6 +378,7 @@ function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $
       marker.setHeading(heading);
       marker.setLatLng([lat, lng]);
       leafletMap.setView([lat, lng], leafletMap.getZoom());
+      updateMapLink(carId, lat, lng);
     });
   }
 }
@@ -374,7 +387,8 @@ export const SimpleMap = {
   mounted() {
     const $position = document.querySelector(`#position_${this.el.dataset.id}`);
     const initialZoom = Number.parseInt(this.el.dataset.initialZoom ?? "15", 10);
-    const containerId = `map_${this.el.dataset.id}`;
+    const carId = this.el.dataset.id;
+    const containerId = `map_${carId}`;
     const isArrow = this.el.dataset.marker === "arrow";
 
     const [rawLat, rawLng, heading] = $position.value.split(",");
@@ -384,9 +398,9 @@ export const SimpleMap = {
     );
 
     if (window.TENCENT_MAP_ENABLED && window.TMap) {
-      mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $position);
+      mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, carId);
     } else {
-      mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $position);
+      mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, carId);
     }
   },
 };
