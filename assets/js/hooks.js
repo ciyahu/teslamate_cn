@@ -414,6 +414,163 @@ export const TriggerChange = {
 import("leaflet-control-geocoder");
 import("@geoman-io/leaflet-geoman-free");
 
+function mountTencentGeoFenceMap($latitude, $longitude, $radius) {
+  const { lat, lng } = wgs84ToGcj02(
+    Number.parseFloat($latitude.value),
+    Number.parseFloat($longitude.value),
+  );
+  const center = new TMap.LatLng(lat, lng);
+  const radiusVal = Number.parseFloat($radius.value) || 50;
+
+  const map = new TMap.Map("map", {
+    center: center,
+    zoom: 17,
+    baseMap: { type: "vector" },
+  });
+  map.removeControl(TMap.constants.DEFAULT_CONTROL_ID.ZOOM);
+  map.removeControl(TMap.constants.DEFAULT_CONTROL_ID.ROTATION);
+
+  const circle = new TMap.MultiCircle({
+    map: map,
+    styles: {
+      circle: new TMap.CircleStyle({
+        color: "rgba(41, 91, 255, 0.16)",
+        showBorder: true,
+        borderColor: "rgba(41, 91, 255, 0.8)",
+        borderWidth: 2,
+      }),
+    },
+    geometries: [{
+      id: "geofence",
+      styleId: "circle",
+      center: center,
+      radius: radiusVal,
+    }],
+  });
+
+  const marker = new TMap.MultiMarker({
+    map: map,
+    geometries: [{
+      id: "center",
+      position: center,
+      draggable: true,
+    }],
+  });
+
+  function updateCircleAndInputs(pos) {
+    circle.updateGeometries([{
+      id: "geofence",
+      styleId: "circle",
+      center: pos,
+      radius: Number.parseFloat($radius.value) || 50,
+    }]);
+    const { lat: wgsLat, lng: wgsLng } = gcj02ToWgs84(pos.lat, pos.lng);
+    $latitude.value = wgsLat;
+    $longitude.value = wgsLng;
+  }
+
+  marker.on("drag_end", (e) => {
+    updateCircleAndInputs(e.geometry.position);
+  });
+
+  marker.on("drag", (e) => {
+    circle.updateGeometries([{
+      id: "geofence",
+      styleId: "circle",
+      center: e.geometry.position,
+      radius: Number.parseFloat($radius.value) || 50,
+    }]);
+  });
+
+  map.on("click", (e) => {
+    const pos = e.latLng;
+    marker.updateGeometries([{ id: "center", position: pos, draggable: true }]);
+    updateCircleAndInputs(pos);
+  });
+
+  $radius.addEventListener("input", () => {
+    const pos = marker.getGeometryById("center").position;
+    circle.updateGeometries([{
+      id: "geofence",
+      styleId: "circle",
+      center: pos,
+      radius: Number.parseFloat($radius.value) || 50,
+    }]);
+  });
+}
+
+function mountLeafletGeoFenceMap($latitude, $longitude, $radius) {
+  const location = toGcjLatLng($latitude.value, $longitude.value);
+
+  const controlOpts = {
+    position: "topleft",
+    cutPolygon: false,
+    drawCircle: false,
+    drawCircleMarker: false,
+    drawMarker: false,
+    drawPolygon: false,
+    drawPolyline: false,
+    drawRectangle: false,
+    removalMode: false,
+  };
+
+  const editOpts = {
+    allowSelfIntersection: false,
+    preventMarkerRemoval: true,
+  };
+
+  const map = createMap({});
+  map.setView(location, 17, { animate: false });
+  map.pm.setLang(LANG);
+  map.pm.addControls(controlOpts);
+  map.pm.enableGlobalEditMode(editOpts);
+
+  const circle = new Circle(location, { radius: $radius.value })
+    .addTo(map)
+    .on("pm:edit", (e) => {
+      const { lat, lng } = e.target.getLatLng();
+      const radius = Math.round(e.target.getRadius());
+      const { lat: wgsLat, lng: wgsLng } = gcj02ToWgs84(lat, lng);
+
+      $radius.value = radius;
+      $latitude.value = wgsLat;
+      $longitude.value = wgsLng;
+
+      const mBox = map.getBounds();
+      const cBox = circle.getBounds();
+      const bounds = mBox.contains(cBox) ? mBox : cBox;
+      map.fitBounds(bounds);
+    });
+
+  new Control.geocoder({ defaultMarkGeocode: false })
+    .on("markgeocode", (e) => {
+      const { bbox, center } = e.geocode;
+      const gcjCenter = toGcjLatLng(center.lat, center.lng);
+
+      const poly = L.polygon([
+        toGcjLatLng(bbox.getSouthEast().lat, bbox.getSouthEast().lng),
+        toGcjLatLng(bbox.getNorthEast().lat, bbox.getNorthEast().lng),
+        toGcjLatLng(bbox.getNorthWest().lat, bbox.getNorthWest().lng),
+        toGcjLatLng(bbox.getSouthWest().lat, bbox.getSouthWest().lng),
+      ]);
+
+      circle.setLatLng(gcjCenter);
+
+      const lBox = poly.getBounds();
+      const cBox = circle.getBounds();
+      const bounds = cBox.contains(lBox) ? cBox : lBox;
+
+      map.fitBounds(bounds);
+      map.pm.enableGlobalEditMode();
+
+      $latitude.value = center.lat;
+      $longitude.value = center.lng;
+    })
+    .addTo(map);
+
+  map.fitBounds(circle.getBounds(), { animate: false });
+}
+
 export const Map = {
   mounted() {
     const geoFence = (name) =>
@@ -423,75 +580,11 @@ export const Map = {
     const $latitude = geoFence("latitude");
     const $longitude = geoFence("longitude");
 
-    const location = toGcjLatLng($latitude.value, $longitude.value);
-
-    const controlOpts = {
-      position: "topleft",
-      cutPolygon: false,
-      drawCircle: false,
-      drawCircleMarker: false,
-      drawMarker: false,
-      drawPolygon: false,
-      drawPolyline: false,
-      drawRectangle: false,
-      removalMode: false,
-    };
-
-    const editOpts = {
-      allowSelfIntersection: false,
-      preventMarkerRemoval: true,
-    };
-
-    const map = createMap({});
-    map.setView(location, 17, { animate: false });
-    map.pm.setLang(LANG);
-    map.pm.addControls(controlOpts);
-    map.pm.enableGlobalEditMode(editOpts);
-
-    const circle = new Circle(location, { radius: $radius.value })
-      .addTo(map)
-      .on("pm:edit", (e) => {
-        const { lat, lng } = e.target.getLatLng();
-        const radius = Math.round(e.target.getRadius());
-        const { lat: wgsLat, lng: wgsLng } = gcj02ToWgs84(lat, lng);
-
-        $radius.value = radius;
-        $latitude.value = wgsLat;
-        $longitude.value = wgsLng;
-
-        const mBox = map.getBounds();
-        const cBox = circle.getBounds();
-        const bounds = mBox.contains(cBox) ? mBox : cBox;
-        map.fitBounds(bounds);
-      });
-
-    new Control.geocoder({ defaultMarkGeocode: false })
-      .on("markgeocode", (e) => {
-        const { bbox, center } = e.geocode;
-        const gcjCenter = toGcjLatLng(center.lat, center.lng);
-
-        const poly = L.polygon([
-          toGcjLatLng(bbox.getSouthEast().lat, bbox.getSouthEast().lng),
-          toGcjLatLng(bbox.getNorthEast().lat, bbox.getNorthEast().lng),
-          toGcjLatLng(bbox.getNorthWest().lat, bbox.getNorthWest().lng),
-          toGcjLatLng(bbox.getSouthWest().lat, bbox.getSouthWest().lng),
-        ]);
-
-        circle.setLatLng(gcjCenter);
-
-        const lBox = poly.getBounds();
-        const cBox = circle.getBounds();
-        const bounds = cBox.contains(lBox) ? cBox : lBox;
-
-        map.fitBounds(bounds);
-        map.pm.enableGlobalEditMode();
-
-        $latitude.value = center.lat;
-        $longitude.value = center.lng;
-      })
-      .addTo(map);
-
-    map.fitBounds(circle.getBounds(), { animate: false });
+    if (window.TENCENT_MAP_ENABLED && window.TMap) {
+      mountTencentGeoFenceMap($latitude, $longitude, $radius);
+    } else {
+      mountLeafletGeoFenceMap($latitude, $longitude, $radius);
+    }
   },
 };
 
