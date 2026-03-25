@@ -250,16 +250,26 @@ function createMap(opts) {
   const isDarkMode =
     document.documentElement.getAttribute("data-theme") === "dark";
 
-  const gaode = new TileLayer(
-    "https://wprd0{s}.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=1&x={x}&y={y}&z={z}",
-    {
-      maxZoom: 19,
-      subdomains: ["1", "2", "3", "4"],
-      className: isDarkMode ? "dark-mode-tiles" : "",
-    },
-  );
+  const tileLayer = window.TENCENT_MAP_ENABLED
+    ? new TileLayer(
+        "https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={y}&type=vector&styleid=0",
+        {
+          maxZoom: 19,
+          subdomains: ["0", "1", "2", "3"],
+          tms: true,
+          className: isDarkMode ? "dark-mode-tiles" : "",
+        },
+      )
+    : new TileLayer(
+        "https://wprd0{s}.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=1&x={x}&y={y}&z={z}",
+        {
+          maxZoom: 19,
+          subdomains: ["1", "2", "3", "4"],
+          className: isDarkMode ? "dark-mode-tiles" : "",
+        },
+      );
 
-  map.addLayer(gaode);
+  map.addLayer(tileLayer);
 
   return map;
 }
@@ -414,91 +424,6 @@ export const TriggerChange = {
 import("leaflet-control-geocoder");
 import("@geoman-io/leaflet-geoman-free");
 
-function mountTencentGeoFenceMap($latitude, $longitude, $radius) {
-  const { lat, lng } = wgs84ToGcj02(
-    Number.parseFloat($latitude.value),
-    Number.parseFloat($longitude.value),
-  );
-  const center = new TMap.LatLng(lat, lng);
-  const radiusVal = Number.parseFloat($radius.value) || 50;
-
-  const map = new TMap.Map("map", {
-    center: center,
-    zoom: 17,
-    baseMap: { type: "vector" },
-  });
-  map.removeControl(TMap.constants.DEFAULT_CONTROL_ID.ZOOM);
-  map.removeControl(TMap.constants.DEFAULT_CONTROL_ID.ROTATION);
-
-  const circle = new TMap.MultiCircle({
-    map: map,
-    styles: {
-      circle: new TMap.CircleStyle({
-        color: "rgba(41, 91, 255, 0.16)",
-        showBorder: true,
-        borderColor: "rgba(41, 91, 255, 0.8)",
-        borderWidth: 2,
-      }),
-    },
-    geometries: [{
-      id: "geofence",
-      styleId: "circle",
-      center: center,
-      radius: radiusVal,
-    }],
-  });
-
-  const marker = new TMap.MultiMarker({
-    map: map,
-    geometries: [{
-      id: "center",
-      position: center,
-      draggable: true,
-    }],
-  });
-
-  function updateCircleAndInputs(pos) {
-    circle.updateGeometries([{
-      id: "geofence",
-      styleId: "circle",
-      center: pos,
-      radius: Number.parseFloat($radius.value) || 50,
-    }]);
-    const { lat: wgsLat, lng: wgsLng } = gcj02ToWgs84(pos.lat, pos.lng);
-    $latitude.value = wgsLat;
-    $longitude.value = wgsLng;
-  }
-
-  marker.on("drag_end", (e) => {
-    updateCircleAndInputs(e.geometry.position);
-  });
-
-  marker.on("drag", (e) => {
-    circle.updateGeometries([{
-      id: "geofence",
-      styleId: "circle",
-      center: e.geometry.position,
-      radius: Number.parseFloat($radius.value) || 50,
-    }]);
-  });
-
-  map.on("click", (e) => {
-    const pos = e.latLng;
-    marker.updateGeometries([{ id: "center", position: pos, draggable: true }]);
-    updateCircleAndInputs(pos);
-  });
-
-  $radius.addEventListener("input", () => {
-    const pos = marker.getGeometryById("center").position;
-    circle.updateGeometries([{
-      id: "geofence",
-      styleId: "circle",
-      center: pos,
-      radius: Number.parseFloat($radius.value) || 50,
-    }]);
-  });
-}
-
 function mountLeafletGeoFenceMap($latitude, $longitude, $radius) {
   const location = toGcjLatLng($latitude.value, $longitude.value);
 
@@ -580,11 +505,7 @@ export const Map = {
     const $latitude = geoFence("latitude");
     const $longitude = geoFence("longitude");
 
-    if (window.TENCENT_MAP_ENABLED && window.TMap) {
-      mountTencentGeoFenceMap($latitude, $longitude, $radius);
-    } else {
-      mountLeafletGeoFenceMap($latitude, $longitude, $radius);
-    }
+    mountLeafletGeoFenceMap($latitude, $longitude, $radius);
   },
 };
 
