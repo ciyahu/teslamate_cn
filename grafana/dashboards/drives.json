@@ -214,7 +214,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "总行驶里程:"
+                "value": "总驾驶时间:"
               }
             ]
           }
@@ -333,7 +333,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Total Distance logged:"
+                "value": "总记录里程:"
               }
             ]
           }
@@ -454,7 +454,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Ø Consumption (net):"
+                "value": "Ø 行驶能耗:"
               }
             ]
           }

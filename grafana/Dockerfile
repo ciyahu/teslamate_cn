@@ -13,17 +13,20 @@ ENV GF_ANALYTICS_REPORTING_ENABLED=false \
     GF_SECURITY_DISABLE_GRAVATAR=true \
     GF_DATABASE_HIGH_AVAILABILITY=false \
     GF_USERS_ALLOW_SIGN_UP=false \
-    GF_USERS_DEFAULT_LANGUAGE=detect \
-    GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/dashboards_internal/home.json \
+    GF_USERS_DEFAULT_LANGUAGE=zh-Hans \
+    GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/dashboards/CurrentState.json \
     GF_DATE_FORMATS_USE_BROWSER_LOCALE=true \
     GF_PLUGINS_PREINSTALL_DISABLED=true \
     GF_UNIFIED_ALERTING_ENABLED=false \
     GF_METRICS_ENABLED=false \
     GF_RECORDING_RULES_ENABLED=false \
     DATABASE_PORT=5432 \
-    DATABASE_SSL_MODE=disable
+    DATABASE_SSL_MODE=disable \
+    GF_PANELS_DISABLE_SANITIZE_HTML=true
 
-USER grafana
+USER root
+
+RUN rm -rf /dashboards && mkdir -p /dashboards
 
 COPY logo.svg /usr/share/grafana/public/img/grafana_icon.svg
 
@@ -35,8 +38,6 @@ COPY apple-touch-icon.png /usr/share/grafana/public/build/img/apple-touch-icon.p
 
 COPY datasource.yml /etc/grafana/provisioning/datasources/
 COPY dashboards.yml /etc/grafana/provisioning/dashboards/
-COPY dashboards/internal/*.json /dashboards_internal/
-COPY dashboards/reports/*.json /dashboards_reports/
 COPY dashboards/*.json /dashboards/
 
 EXPOSE 3000

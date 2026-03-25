@@ -548,10 +548,10 @@
       "options": {
         "basemap": {
           "config": {
-            "url": "https://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=1&x={x}&y={y}&z={z}"
+            "url": "${map_url}"
           },
           "type": "xyz",
-          "name": "高德地图"
+          "name": "动态底图"
         },
         "controls": {
           "mouseWheelZoom": true,
@@ -2503,6 +2503,33 @@
         "refresh": 1,
         "regex": "",
         "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "高德地图",
+          "value": "https://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=1&x={x}&y={y}&z={z}"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "选择地图源",
+        "multi": false,
+        "name": "map_url",
+        "options": [
+          {
+            "selected": true,
+            "text": "高德地图",
+            "value": "https://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=1&x={x}&y={y}&z={z}"
+          },
+          {
+            "selected": false,
+            "text": "腾讯地图",
+            "value": "https://rt{0-3}.map.gtimg.com/tile?z={z}&x={x}&y={-y}&type=vector&styleid=0"
+          }
+        ],
+        "query": "高德地图 : https://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=1&x={x}&y={y}&z={z}, 腾讯地图 : https://rt{0-3}.map.gtimg.com/tile?z={z}&x={x}&y={-y}&type=vector&styleid=0",
+        "skipUrlSync": false,
+        "type": "custom"
       },
       {
         "current": {},
