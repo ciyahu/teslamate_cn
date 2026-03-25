@@ -1,4 +1,4 @@
-name: Docker Hub Multi-arch Push
+name: "Build And Push Teslamate To Docker Hub"
 
 on:
   workflow_dispatch:
