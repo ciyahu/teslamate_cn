@@ -96,21 +96,9 @@
         <div id="navbar" class="navbar-menu">
           <div class="navbar-end">
             <%= if grafana_url = @conn.assigns.settings.grafana_url do %>
-              <div class="navbar-item has-dropdown is-hoverable">
-                <a class="navbar-link is-arrowless">
-                  <span class="icon"><i class="mdi mdi-view-dashboard"></i></span>&nbsp;<span><%= gettext "Dashboards" %></span>
-                </a>
-                <div class="navbar-dropdown is-boxed">
-                  <%= for %{"title" => title, "uid" => uid} <- list_dashboards() do %>
-                    <%= link(title,
-                      to: "#{grafana_url}/d/#{uid}",
-                      class: "navbar-item",
-                      data_uid: uid,
-                      target: "_blank"
-                    ) %>
-                  <% end %>
-                </div>
-              </div>
+              <a class="navbar-item" href={grafana_url} target="_blank">
+                <span class="icon"><i class="mdi mdi-view-dashboard"></i></span>&nbsp;<span><%= gettext "Dashboards" %></span>
+              </a>
             <% end %>
             <.link
               navigate={Routes.live_path(@conn, TeslaMateWeb.GeoFenceLive.Index)}
