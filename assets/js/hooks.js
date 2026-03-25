@@ -273,7 +273,7 @@ function updateMapLink(carId, lat, lng) {
 
 function mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, carId) {
   const center = new TMap.LatLng(lat, lng);
-  const headingVal = Number.parseFloat(heading) || 0;
+  const headingVal = (360 - (Number.parseFloat(heading) || 0)) % 360;
 
   const map = new TMap.Map(containerId, {
     center: center,
@@ -281,6 +281,8 @@ function mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $
     baseMap: { type: "vector" },
     control: false,
   });
+  map.removeControl(TMap.constants.DEFAULT_CONTROL_ID.ZOOM);
+  map.removeControl(TMap.constants.DEFAULT_CONTROL_ID.ROTATION);
 
   const marker = new TMap.MultiMarker({
     map: map,
@@ -297,7 +299,6 @@ function mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $
       id: "marker",
       styleId: "marker",
       position: center,
-      rotate: headingVal,
     }],
   });
 
@@ -311,7 +312,7 @@ function mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $
         Number.parseFloat(rawLng),
       );
       const newPos = new TMap.LatLng(lat, lng);
-      const newHeading = Number.parseFloat(heading) || 0;
+      const newHeading = (360 - (Number.parseFloat(heading) || 0)) % 360;
       marker.setStyles({
         marker: new TMap.MarkerStyle({
           width: 30,
@@ -325,7 +326,6 @@ function mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $
         id: "marker",
         styleId: "marker",
         position: newPos,
-        rotate: newHeading,
       }]);
       map.setCenter(newPos);
       updateMapLink(carId, lat, lng);
