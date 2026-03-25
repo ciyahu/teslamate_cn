@@ -254,7 +254,7 @@ function createMap(opts) {
     ? new TileLayer(
         "https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={y}&type=vector&styleid=0",
         {
-          maxZoom: 19,
+          maxZoom: 18,
           subdomains: ["0", "1", "2", "3"],
           tms: true,
           className: isDarkMode ? "dark-mode-tiles" : "",
