@@ -15,6 +15,9 @@ defmodule TeslaMate.Settings.GlobalSettings do
     field :language, :string
     field :theme_mode, Ecto.Enum, values: [:light, :system, :dark], default: :system
 
+    field :tencent_map_enabled, :boolean, default: false
+    field :tencent_map_key, :string
+
     timestamps()
   end
 
@@ -93,7 +96,9 @@ defmodule TeslaMate.Settings.GlobalSettings do
       :base_url,
       :grafana_url,
       :language,
-      :theme_mode
+      :theme_mode,
+      :tencent_map_enabled,
+      :tencent_map_key
     ])
     |> validate_required([
       :unit_of_length,
@@ -103,6 +108,7 @@ defmodule TeslaMate.Settings.GlobalSettings do
       :language,
       :theme_mode
     ])
+    |> validate_tencent_map()
     |> update_change(:base_url, &trim_url/1)
     |> update_change(:grafana_url, &trim_url/1)
     |> validate_url(:base_url)
@@ -110,6 +116,18 @@ defmodule TeslaMate.Settings.GlobalSettings do
     |> validate_inclusion(:language, Map.values(@supported_languages),
       message: "is not supported"
     )
+  end
+
+  defp validate_tencent_map(changeset) do
+    enabled = get_field(changeset, :tencent_map_enabled)
+    key = get_field(changeset, :tencent_map_key)
+
+    if enabled && (is_nil(key) || String.trim(key) == "") do
+      add_error(changeset, :tencent_map_key, "请输入地图Key")
+      |> put_change(:tencent_map_enabled, false)
+    else
+      changeset
+    end
   end
 
   defp trim_url(url) do

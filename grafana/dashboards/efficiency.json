@@ -20,21 +20,41 @@
   "graphTooltip": 0,
   "links": [
     {
-      "icon": "dashboard",
-      "tags": [],
-      "title": "TeslaMate",
-      "tooltip": "",
-      "type": "link",
-      "url": "${base_url:raw}"
+      "asDropdown": true,
+      "icon": "external link",
+      "tags": [
+        "tesla2"
+      ],
+      "title": "车辆信息",
+      "type": "dashboards"
     },
     {
       "asDropdown": true,
       "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
       "tags": [
-        "tesla"
+        "battery"
       ],
-      "title": "Dashboards",
-      "type": "dashboards"
+      "targetBlank": false,
+      "title": "电池",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    },
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [
+        "trip"
+      ],
+      "targetBlank": false,
+      "title": "行驶",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
     }
   ],
   "panels": [
@@ -49,7 +69,7 @@
       "id": 10,
       "panels": [],
       "repeat": "car_id",
-      "title": "$car_id",
+      "title": "车辆：$car_id",
       "type": "row"
     },
     {
@@ -66,8 +86,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#c7d0d9",
-                "value": 0
+                "color": "#c7d0d9"
               }
             ]
           },
@@ -130,7 +149,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "13.0.1+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -140,7 +159,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "select \n  sum((start_${preferred_range}_range_km - end_${preferred_range}_range_km) * cars.efficiency) / convert_km(sum(distance)::numeric, '$length_unit') * 1000 AS \"consumption_$length_unit\"\nfrom drives \ninner join cars on cars.id = car_id\nwhere \n  distance is not null and\n  start_${preferred_range}_range_km - end_${preferred_range}_range_km >= 0.1 and\n  $__timeFilter(start_date) and\n  car_id = $car_id",
+          "rawSql": "select \n  sum((start_${preferred_range}_range_km - end_${preferred_range}_range_km) * cars.efficiency) / convert_km(sum(distance)::numeric, '$length_unit') * 1000 AS \"consumption_$length_unit\"\nfrom drives \ninner join cars on cars.id = car_id\nwhere \n  distance is not null and\n  start_${preferred_range}_range_km - end_${preferred_range}_range_km >= 0.1 and\n  car_id::text = ANY(string_to_array('${car_id:csv}', ','))",
           "refId": "A",
           "sql": {
             "columns": [
@@ -161,7 +180,7 @@
           }
         }
       ],
-      "title": "Ø Consumption (net)",
+      "title": "能耗（行驶）",
       "type": "stat"
     },
     {
@@ -169,7 +188,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "TeslaMate"
       },
-      "description": "(Range lost * Efficiency) / Distance driven",
+      "description": "(Range lost between charges * Efficiency) / Distance driven between charges",
       "fieldConfig": {
         "defaults": {
           "decimals": 0,
@@ -178,8 +197,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#c7d0d9",
-                "value": 0
+                "color": "#c7d0d9"
               }
             ]
           },
@@ -242,7 +260,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "13.0.1+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -252,7 +270,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "-- Query shared between Charging Stats, Efficiency, Statistics & Trip Dashboards (with minor changes) - ensure to modify in all places when necessary\n\nwith drives_start_event as (\n\n    select\n        'drive_start' as event, start_date as date, start_${preferred_range}_range_km as range, start_km as odometer, car_id, distance is null as is_incomplete\n    from drives\n    where car_id = $car_id and $__timeFilter(start_date) and 48 <= ((${__to:date:seconds} - ${__from:date:seconds})::numeric / 3600)\n\n),\n\ndrives_end_event as (\n\n    select\n        'drive_end' as event, case when end_date is null then start_date + interval '1 second' else end_date end as date, end_${preferred_range}_range_km as range, end_km as odometer, car_id, distance is null as is_incomplete\n    from drives\n    where car_id = $car_id and $__timeFilter(start_date) and 48 <= ((${__to:date:seconds} - ${__from:date:seconds})::numeric / 3600)\n\n),\n\ncharging_processes_start_event as (\n\n    select\n        'charging_process_start' as event, start_date as date, start_${preferred_range}_range_km as range, p.odometer, cp.car_id, end_date is null as is_incomplete\n    from charging_processes cp\n        inner join positions p on cp.position_id = p.id\n    where cp.car_id = $car_id and $__timeFilter(start_date) and 48 <= ((${__to:date:seconds} - ${__from:date:seconds})::numeric / 3600)\n\n),\n\ncharging_processes_end_event as (\n\n    select\n        'charging_process_end' as event, case when end_date is null then start_date + interval '1 second' else end_date end as date, end_${preferred_range}_range_km as range, p.odometer, cp.car_id, end_date is null as is_incomplete\n    from charging_processes cp\n        inner join positions p on cp.position_id = p.id\n    where cp.car_id = $car_id and $__timeFilter(start_date) and 48 <= ((${__to:date:seconds} - ${__from:date:seconds})::numeric / 3600)\n\n),\n\npositions as (\n\n    select\n        case\n            when drive_id is not null and lead(drive_id) over w is not null then 'drive_start'\n            else 'something'\n        end as event,\n        date, ${preferred_range}_battery_range_km as range, p.odometer, p.car_id, false as is_incomplete\n    from positions p\n    where ideal_battery_range_km is not null and car_id = $car_id and 48 > ((${__to:date:seconds} - ${__from:date:seconds})::numeric / 3600)\n    and (drive_id in (select id from drives where $__timeFilter(start_date)) or drive_id is null and $__timeFilter(date))\n    window w as (order by date)\n\n),\n\ncombined as (\n\n    select * from drives_start_event\n    union all\n    select * from drives_end_event\n    union all\n    select * from charging_processes_start_event\n    union all\n    select * from charging_processes_end_event\n    union all\n    select * from positions\n\n),\n\nfinal as (\n\n    select\n        car_id,\n        case when is_incomplete then 0 else lead(odometer) over w - odometer end as distance,\n        case when is_incomplete then 0 else case when event != 'drive_start' then greatest(range - lead(range) over w, 0) else range - lead(range) over w end end as range_loss\n    from combined\n    window w as (order by date asc)\n\n)\n\nselect\n    'Total Energy consumed (gross)' as metric,\n    sum(range_loss) * c.efficiency as value,\n    (sum(range_loss) * c.efficiency * 1000) / nullif(convert_km(sum(distance)::numeric, '$length_unit'), 0) as consumption_$length_unit\nfrom final\n    inner join cars c on car_id = c.id\ngroup by c.efficiency",
+          "rawSql": "WITH d1 AS (\n\tSELECT\n\t\tc.car_id,\n\t\tlag(end_${preferred_range}_range_km) OVER (ORDER BY start_date) - start_${preferred_range}_range_km AS range_loss,\n\t\tp.odometer - lag(p.odometer) OVER (ORDER BY start_date) AS distance\n\tFROM\n\t\tcharging_processes c\n\tLEFT JOIN positions p ON p.id = c.position_id \n\tWHERE\n\t  end_date IS NOT NULL AND\n\t  c.car_id::text = ANY(string_to_array('${car_id:csv}', ','))\n\tORDER BY\n\t\tstart_date\n),\nd2 AS (\nSELECT\n\tcar_id,\n\tsum(range_loss) AS range_loss,\n\tsum(distance) AS distance\nFROM\n\td1\nWHERE\n\tdistance >= 0 AND range_loss >= 0\nGROUP BY\n\tcar_id\n)\nSELECT\nrange_loss * c.efficiency / convert_km(distance::numeric, '$length_unit') * 1000 AS \"consumption_$length_unit\"\nFROM\n\td2\n\tLEFT JOIN cars c ON c.id = car_id",
           "refId": "A",
           "sql": {
             "columns": [
@@ -273,21 +291,7 @@
           }
         }
       ],
-      "title": "Ø Consumption (gross)",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "metric": true,
-              "value": true
-            },
-            "includeByName": {},
-            "indexByName": {},
-            "renameByName": {}
-          }
-        }
-      ],
+      "title": "能耗 (总计)",
       "type": "stat"
     },
     {
@@ -304,8 +308,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#c7d0d9",
-                "value": 0
+                "color": "#c7d0d9"
               }
             ]
           },
@@ -368,7 +371,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "13.0.1+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -378,7 +381,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "select convert_km(sum(distance)::numeric, '$length_unit') as \"distance_$length_unit\" \nfrom drives \nwhere car_id = $car_id and $__timeFilter(start_date);",
+          "rawSql": "select convert_km(sum(distance)::numeric, '$length_unit') as \"distance_$length_unit\" \nfrom drives \nwhere car_id::text = ANY(string_to_array('${car_id:csv}', ','));",
           "refId": "A",
           "sql": {
             "columns": [
@@ -399,7 +402,7 @@
           }
         }
       ],
-      "title": "Logged Distance",
+      "title": "记录的距离",
       "type": "stat"
     },
     {
@@ -415,9 +418,6 @@
               "type": "auto"
             },
             "filterable": false,
-            "footer": {
-              "reducers": []
-            },
             "inspect": false
           },
           "mappings": [],
@@ -427,8 +427,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               }
             ]
           }
@@ -442,7 +441,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Temperature"
+                "value": "温度"
               },
               {
                 "id": "unit",
@@ -462,7 +461,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Temperature"
+                "value": "温度"
               },
               {
                 "id": "unit",
@@ -482,7 +481,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Driving Efficiency"
+                "value": "能效"
               },
               {
                 "id": "unit",
@@ -505,8 +504,7 @@
                   "mode": "absolute",
                   "steps": [
                     {
-                      "color": "super-light-orange",
-                      "value": 0
+                      "color": "super-light-orange"
                     },
                     {
                       "color": "light-orange",
@@ -537,7 +535,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Consumption (net)"
+                "value": "能耗（行驶）"
               },
               {
                 "id": "unit",
@@ -557,7 +555,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Consumption (net)"
+                "value": "能耗（行驶）"
               },
               {
                 "id": "unit",
@@ -577,7 +575,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Distance"
+                "value": "距离（公里）"
               },
               {
                 "id": "unit",
@@ -597,7 +595,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Distance"
+                "value": "距离（英里）"
               },
               {
                 "id": "unit",
@@ -617,7 +615,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Speed"
+                "value": "平均速度"
               },
               {
                 "id": "unit",
@@ -637,7 +635,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Ø Speed"
+                "value": "平均速度"
               },
               {
                 "id": "unit",
@@ -660,6 +658,14 @@
       "id": 2,
       "options": {
         "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true,
         "sortBy": [
           {
@@ -668,7 +674,7 @@
           }
         ]
       },
-      "pluginVersion": "13.0.1+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -678,7 +684,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH t AS (\n\tSELECT\n\t  CASE WHEN '$temp_unit' = 'C' THEN ROUND(cast(outside_temp_avg AS numeric) / 5, 0) * 5 \n\t\t\t   WHEN '$temp_unit' = 'F' THEN ROUND(cast(convert_celsius(outside_temp_avg, '$temp_unit') AS numeric) / 10, 0) * 10\n\t\tEND AS outside_temp,\n\t\tsum(start_ideal_range_km - end_ideal_range_km) AS total_ideal_range,\n\t\tsum(start_rated_range_km - end_rated_range_km) AS total_rated_range,\n\t\tsum(distance) AS total_distance,\n\t\tsum(duration_min) as duration,\n\t\tcar_id\n\tFROM\n\t\tdrives\n\tWHERE\n\t\tdistance IS NOT NULL\n\t\tAND car_id = $car_id\n\t\tAND convert_km(distance::numeric, '$length_unit') >= $min_distance \n\t\tAND $__timeFilter(start_date) \n\t\tAND start_${preferred_range}_range_km - end_${preferred_range}_range_km > 0.1\n\tGROUP BY\n\t\t1,\n\t\tcar_id\n)\n\nSELECT\n\toutside_temp as outside_temp_$temp_unit,\n  total_distance / total_${preferred_range}_range AS efficiency,\n\ttotal_${preferred_range}_range / convert_km(total_distance::numeric, '$length_unit') * c.efficiency * 1000 AS consumption_$length_unit,\n  convert_km(total_distance::numeric, '$length_unit') as total_distance_$length_unit,\n\t(convert_km(total_distance::numeric, '$length_unit') / duration) * 60 as avg_speed_$length_unit\nFROM\n\tt\nJOIN cars c ON t.car_id = c.id\nWHERE outside_temp IS NOT NULL\norder by 1 desc\n",
+          "rawSql": "WITH t AS (\n\tSELECT\n\t  CASE WHEN '$temp_unit' = 'C' THEN ROUND(cast(outside_temp_avg AS numeric) / 5, 0) * 5 \n\t\t\t   WHEN '$temp_unit' = 'F' THEN ROUND(cast(convert_celsius(outside_temp_avg, '$temp_unit') AS numeric) / 10, 0) * 10\n\t\tEND AS outside_temp,\n\t\tsum(start_ideal_range_km - end_ideal_range_km) AS total_ideal_range,\n\t\tsum(start_rated_range_km - end_rated_range_km) AS total_rated_range,\n\t\tsum(distance) AS total_distance,\n\t\tsum(duration_min) as duration,\n\t\tcar_id\n\tFROM\n\t\tdrives\n\tWHERE\n\t\tdistance IS NOT NULL\n\t\tAND car_id::text = ANY(string_to_array('${car_id:csv}', ','))\n\t\tAND convert_km(distance::numeric, '$length_unit') >= COALESCE(NULLIF('$min_distance', '')::numeric, 0) \n\t\tAND start_${preferred_range}_range_km - end_${preferred_range}_range_km > 0.1\n\tGROUP BY\n\t\t1,\n\t\tcar_id\n)\n\nSELECT\n\toutside_temp as outside_temp_$temp_unit,\n  total_distance / total_${preferred_range}_range AS efficiency,\n\ttotal_${preferred_range}_range / convert_km(total_distance::numeric, '$length_unit') * c.efficiency * 1000 AS consumption_$length_unit,\n  convert_km(total_distance::numeric, '$length_unit') as total_distance_$length_unit,\n\t(convert_km(total_distance::numeric, '$length_unit') / duration) * 60 as avg_speed_$length_unit\nFROM\n\tt\nJOIN cars c ON t.car_id = c.id\nWHERE outside_temp IS NOT NULL\norder by 1 desc\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -699,7 +705,7 @@
           }
         }
       ],
-      "title": "Temperature – Driving Efficiency",
+      "title": "温度 – 能效",
       "type": "table"
     },
     {
@@ -715,8 +721,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#c7d0d9",
-                "value": 0
+                "color": "#c7d0d9"
               }
             ]
           },
@@ -779,7 +784,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "13.0.1+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -789,7 +794,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n\tefficiency / convert_km(1, '$length_unit') * 1000 as \"efficiency_$length_unit\"\nFROM\n\tcars\nWHERE\n\tid = $car_id;",
+          "rawSql": "SELECT\n\tefficiency / convert_km(1, '$length_unit') * 1000 as \"efficiency_$length_unit\"\nFROM\n\tcars\nWHERE\n\tid::text = ANY(string_to_array('${car_id:csv}', ','));",
           "refId": "A",
           "sql": {
             "columns": [
@@ -810,7 +815,7 @@
           }
         }
       ],
-      "title": "Current $preferred_range efficiency",
+      "title": "当前额定能效 $preferred_range",
       "type": "stat"
     },
     {
@@ -826,9 +831,6 @@
               "type": "auto"
             },
             "filterable": false,
-            "footer": {
-              "reducers": []
-            },
             "inspect": false
           },
           "mappings": [],
@@ -836,8 +838,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               }
             ]
           }
@@ -851,7 +852,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Efficiency"
+                "value": "能效"
               },
               {
                 "id": "unit",
@@ -867,7 +868,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Efficiency"
+                "value": "能效"
               },
               {
                 "id": "unit",
@@ -886,9 +887,17 @@
       "id": 12,
       "options": {
         "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true
       },
-      "pluginVersion": "13.0.1+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -898,7 +907,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  round((charge_energy_added / NULLIF(end_ideal_range_km - start_ideal_range_km, 0))::numeric / convert_km(1, '$length_unit'), 3) * 1000 as \"efficiency_$length_unit\",\n  count(*) as count\nFROM\n  charging_processes\nWHERE \n  car_id = $car_id\n  AND duration_min > 10\n  AND end_battery_level <= 95\n  AND start_ideal_range_km IS NOT NULL\n  AND end_ideal_range_km IS NOT NULL\n  AND charge_energy_added > 0\nGROUP BY\n  1\nORDER BY\n  2 DESC\nLIMIT 3",
+          "rawSql": "SELECT\n  round((charge_energy_added / NULLIF(end_ideal_range_km - start_ideal_range_km, 0))::numeric / convert_km(1, '$length_unit'), 3) * 1000 as \"efficiency_$length_unit\",\n  count(*) as count\nFROM\n  charging_processes\nWHERE \n  car_id::text = ANY(string_to_array('${car_id:csv}', ','))\n  AND duration_min > 10\n  AND end_battery_level <= 95\n  AND start_ideal_range_km IS NOT NULL\n  AND end_ideal_range_km IS NOT NULL\n  AND charge_energy_added > 0\nGROUP BY\n  1\nORDER BY\n  2 DESC\nLIMIT 3",
           "refId": "A",
           "sql": {
             "columns": [
@@ -919,7 +928,7 @@
           }
         }
       ],
-      "title": "Derived ideal efficiencies",
+      "title": "推导理想能效",
       "type": "table"
     },
     {
@@ -935,9 +944,6 @@
               "type": "auto"
             },
             "filterable": false,
-            "footer": {
-              "reducers": []
-            },
             "inspect": false
           },
           "mappings": [],
@@ -945,8 +951,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               }
             ]
           }
@@ -964,7 +969,7 @@
               },
               {
                 "id": "displayName",
-                "value": "Efficiency"
+                "value": "能效"
               }
             ]
           },
@@ -976,7 +981,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Efficiency"
+                "value": "能效"
               },
               {
                 "id": "unit",
@@ -995,9 +1000,17 @@
       "id": 15,
       "options": {
         "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true
       },
-      "pluginVersion": "13.0.1+security-01",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
@@ -1007,7 +1020,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  round((charge_energy_added / NULLIF(end_rated_range_km - start_rated_range_km, 0))::numeric / convert_km(1, '$length_unit'), 3) * 1000 as \"efficiency_$length_unit\",\n\tcount(*) as count\nFROM\n  charging_processes\nWHERE \n  car_id = $car_id\n  AND duration_min > 10\n  AND end_battery_level <= 95\n  AND start_rated_range_km IS NOT NULL\n  AND end_rated_range_km IS NOT NULL\n  AND charge_energy_added > 0\nGROUP BY\n  1\nORDER BY\n  2 DESC\nLIMIT 3",
+          "rawSql": "SELECT\n  round((charge_energy_added / NULLIF(end_rated_range_km - start_rated_range_km, 0))::numeric / convert_km(1, '$length_unit'), 3) * 1000 as \"efficiency_$length_unit\",\n\tcount(*) as count\nFROM\n  charging_processes\nWHERE \n  car_id::text = ANY(string_to_array('${car_id:csv}', ','))\n  AND duration_min > 10\n  AND end_battery_level <= 95\n  AND start_rated_range_km IS NOT NULL\n  AND end_rated_range_km IS NOT NULL\n  AND charge_energy_added > 0\nGROUP BY\n  1\nORDER BY\n  2 DESC\nLIMIT 3",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1028,15 +1041,15 @@
           }
         }
       ],
-      "title": "Derived rated efficiencies",
+      "title": "推导额定能效",
       "type": "table"
     }
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 42,
+  "schemaVersion": 41,
   "tags": [
-    "tesla"
+    "tesla2"
   ],
   "templating": {
     "list": [
@@ -1055,7 +1068,6 @@
         "query": "SELECT\n    id as __value,\n    CASE WHEN COUNT(id) OVER (PARTITION BY name) > 1 AND name IS NOT NULL THEN CONCAT(name, ' - ', RIGHT(vin, 6)) ELSE COALESCE(name, CONCAT('VIN ', vin)) end as __text \nFROM cars\nORDER BY display_priority ASC, name ASC, vin ASC;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1072,7 +1084,6 @@
         "query": "select unit_of_temperature from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1089,7 +1100,6 @@
         "query": "select unit_of_length from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1106,7 +1116,6 @@
         "query": "select preferred_range from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       },
       {
@@ -1115,12 +1124,37 @@
           "value": "1"
         },
         "includeAll": false,
-        "label": "min. distance per drive",
+        "label": "每次行驶的最小距离",
         "name": "min_distance",
-        "options": [],
+        "options": [
+          {
+            "selected": true,
+            "text": "1",
+            "value": "1"
+          },
+          {
+            "selected": false,
+            "text": "5",
+            "value": "5"
+          },
+          {
+            "selected": false,
+            "text": "10",
+            "value": "10"
+          },
+          {
+            "selected": false,
+            "text": "25",
+            "value": "25"
+          },
+          {
+            "selected": false,
+            "text": "50",
+            "value": "50"
+          }
+        ],
         "query": "1, 5, 10, 25, 50",
-        "type": "custom",
-        "valuesFormat": "csv"
+        "type": "custom"
       },
       {
         "current": {},
@@ -1136,19 +1170,19 @@
         "query": "select base_url from settings limit 1;",
         "refresh": 1,
         "regex": "",
-        "regexApplyTo": "value",
         "type": "query"
       }
     ]
   },
   "time": {
-    "from": "now-10y",
+    "from": "now-6h",
     "to": "now"
   },
-  "timepicker": {},
-  "timezone": "browser",
-  "title": "Efficiency",
-  "uid": "fu4SiQgWz",
-  "version": 1,
-  "weekStart": ""
+  "timepicker": {
+    "hidden": true
+  },
+  "timezone": "",
+  "title": "能效",
+  "uid": "wemate_fu4SiQgWz",
+  "version": 1
 }

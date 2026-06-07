@@ -239,7 +239,8 @@ defmodule TeslaApi.Vehicle.State do
       :timestamp,
       :trim_badging,
       :use_range_badging,
-      :wheel_type
+      :wheel_type,
+      :driver_assist
     ]
 
     def result(vehicle_config) when is_map(vehicle_config) do
@@ -268,7 +269,8 @@ defmodule TeslaApi.Vehicle.State do
         timestamp: vehicle_config["timestamp"],
         trim_badging: vehicle_config["trim_badging"],
         use_range_badging: vehicle_config["use_range_badging"],
-        wheel_type: vehicle_config["wheel_type"]
+        wheel_type: vehicle_config["wheel_type"],
+        driver_assist: vehicle_config["driver_assist"]
       }
     end
   end
@@ -320,7 +322,12 @@ defmodule TeslaApi.Vehicle.State do
       :tpms_soft_warning_fl,
       :tpms_soft_warning_fr,
       :tpms_soft_warning_rl,
-      :tpms_soft_warning_rr
+      :tpms_soft_warning_rr,
+      :tpms_last_seen_pressure_time_fl,
+      :tpms_last_seen_pressure_time_fr,
+      :tpms_last_seen_pressure_time_rl,
+      :tpms_last_seen_pressure_time_rr,
+      :now_playing_title
     ]
 
     defmodule SoftwareUpdate do
@@ -388,7 +395,12 @@ defmodule TeslaApi.Vehicle.State do
         tpms_soft_warning_fl: vehicle_state["tpms_soft_warning_fl"],
         tpms_soft_warning_fr: vehicle_state["tpms_soft_warning_fr"],
         tpms_soft_warning_rl: vehicle_state["tpms_soft_warning_rl"],
-        tpms_soft_warning_rr: vehicle_state["tpms_soft_warning_rr"]
+        tpms_soft_warning_rr: vehicle_state["tpms_soft_warning_rr"],
+        tpms_last_seen_pressure_time_fl: vehicle_state["tpms_last_seen_pressure_time_fl"],
+        tpms_last_seen_pressure_time_fr: vehicle_state["tpms_last_seen_pressure_time_fr"],
+        tpms_last_seen_pressure_time_rl: vehicle_state["tpms_last_seen_pressure_time_rl"],
+        tpms_last_seen_pressure_time_rr: vehicle_state["tpms_last_seen_pressure_time_rr"],
+        now_playing_title: get_in(vehicle_state, ["media_info", "now_playing_title"])
       }
     end
   end
