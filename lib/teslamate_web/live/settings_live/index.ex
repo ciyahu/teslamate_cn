@@ -179,8 +179,12 @@ defmodule TeslaMateWeb.SettingsLive.Index do
   end
 
   defp prepare(settings) do
-    Enum.reduce(settings, %{}, fn %CarSettings{car: car} = s, acc ->
-      Map.put(acc, car.id, %{original: s, changeset: Settings.change_car_settings(s)})
+    Enum.reduce(settings, %{}, fn
+      %CarSettings{car: nil}, acc ->
+        acc
+
+      %CarSettings{car: car} = s, acc ->
+        Map.put(acc, car.id, %{original: s, changeset: Settings.change_car_settings(s)})
     end)
   end
 end

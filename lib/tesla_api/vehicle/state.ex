@@ -23,6 +23,8 @@ defmodule TeslaApi.Vehicle.State do
       :fast_charger_brand,
       :scheduled_charging_start_time,
       :conn_charge_cable,
+      :charge_port_color,
+      :scheduled_charging_mode,
       :timestamp,
       :user_charge_enable_request,
       :charge_port_cold_weather_mode,
@@ -69,6 +71,8 @@ defmodule TeslaApi.Vehicle.State do
         fast_charger_brand: charge["fast_charger_brand"],
         scheduled_charging_start_time: charge["scheduled_charging_start_time"],
         conn_charge_cable: charge["conn_charge_cable"],
+        charge_port_color: charge["charge_port_color"],
+        scheduled_charging_mode: charge["scheduled_charging_mode"],
         timestamp: charge["timestamp"],
         user_charge_enable_request: charge["user_charge_enable_request"],
         charge_port_cold_weather_mode: charge["charge_port_cold_weather_mode"],
@@ -125,7 +129,9 @@ defmodule TeslaApi.Vehicle.State do
       :steering_wheel_heater,
       :smart_preconditioning,
       :timestamp,
-      :wiper_blade_heater
+      :wiper_blade_heater,
+      :cabin_overheat_protection,
+      :cabin_overheat_protection_actively_cooling
     ]
 
     def result(climate) when is_map(climate) do
@@ -160,7 +166,9 @@ defmodule TeslaApi.Vehicle.State do
         steering_wheel_heater: climate["steering_wheel_heater"],
         smart_preconditioning: climate["smart_preconditioning"],
         timestamp: climate["timestamp"],
-        wiper_blade_heater: climate["wiper_blade_heater"]
+        wiper_blade_heater: climate["wiper_blade_heater"],
+        cabin_overheat_protection: climate["cabin_overheat_protection"],
+        cabin_overheat_protection_actively_cooling: climate["cabin_overheat_protection_actively_cooling"]
       }
     end
   end
@@ -239,7 +247,10 @@ defmodule TeslaApi.Vehicle.State do
       :timestamp,
       :trim_badging,
       :use_range_badging,
-      :wheel_type
+      :wheel_type,
+      :driver_assist,
+      :exterior_trim,
+      :performance_package
     ]
 
     def result(vehicle_config) when is_map(vehicle_config) do
@@ -268,7 +279,10 @@ defmodule TeslaApi.Vehicle.State do
         timestamp: vehicle_config["timestamp"],
         trim_badging: vehicle_config["trim_badging"],
         use_range_badging: vehicle_config["use_range_badging"],
-        wheel_type: vehicle_config["wheel_type"]
+        wheel_type: vehicle_config["wheel_type"],
+        driver_assist: vehicle_config["driver_assist"],
+        exterior_trim: vehicle_config["exterior_trim"],
+        performance_package: vehicle_config["performance_package"]
       }
     end
   end
@@ -320,7 +334,13 @@ defmodule TeslaApi.Vehicle.State do
       :tpms_soft_warning_fl,
       :tpms_soft_warning_fr,
       :tpms_soft_warning_rl,
-      :tpms_soft_warning_rr
+      :tpms_soft_warning_rr,
+      :tpms_last_seen_pressure_time_fl,
+      :tpms_last_seen_pressure_time_fr,
+      :tpms_last_seen_pressure_time_rl,
+      :tpms_last_seen_pressure_time_rr,
+      :now_playing_title,
+      :media_playback_status
     ]
 
     defmodule SoftwareUpdate do
@@ -388,7 +408,13 @@ defmodule TeslaApi.Vehicle.State do
         tpms_soft_warning_fl: vehicle_state["tpms_soft_warning_fl"],
         tpms_soft_warning_fr: vehicle_state["tpms_soft_warning_fr"],
         tpms_soft_warning_rl: vehicle_state["tpms_soft_warning_rl"],
-        tpms_soft_warning_rr: vehicle_state["tpms_soft_warning_rr"]
+        tpms_soft_warning_rr: vehicle_state["tpms_soft_warning_rr"],
+        tpms_last_seen_pressure_time_fl: vehicle_state["tpms_last_seen_pressure_time_fl"],
+        tpms_last_seen_pressure_time_fr: vehicle_state["tpms_last_seen_pressure_time_fr"],
+        tpms_last_seen_pressure_time_rl: vehicle_state["tpms_last_seen_pressure_time_rl"],
+        tpms_last_seen_pressure_time_rr: vehicle_state["tpms_last_seen_pressure_time_rr"],
+        now_playing_title: get_in(vehicle_state, ["media_info", "now_playing_title"]),
+        media_playback_status: get_in(vehicle_state, ["media_info", "media_playback_status"])
       }
     end
   end

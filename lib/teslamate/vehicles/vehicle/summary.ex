@@ -1,7 +1,7 @@
 defmodule TeslaMate.Vehicles.Vehicle.Summary do
   import TeslaMate.Convert, only: [miles_to_km: 2, mph_to_kmh: 1]
 
-  alias TeslaApi.Vehicle.State.{Drive, Charge, VehicleState}
+  alias TeslaApi.Vehicle.State.{Drive, Charge, VehicleConfig, VehicleState}
   alias TeslaApi.Vehicle
   alias TeslaMate.Log.Car
 
@@ -15,10 +15,17 @@ defmodule TeslaMate.Vehicles.Vehicle.Summary do
     charger_actual_current charger_voltage version update_available update_version is_user_present geofence
     model trim_badging exterior_color wheel_type spoiler_type trunk_open frunk_open elevation power
     charge_current_request charge_current_request_max tpms_pressure_fl tpms_pressure_fr tpms_pressure_rl tpms_pressure_rr
-    tpms_soft_warning_fl tpms_soft_warning_fr tpms_soft_warning_rl tpms_soft_warning_rr climate_keeper_mode
+    tpms_soft_warning_fl tpms_soft_warning_fr tpms_soft_warning_rl tpms_soft_warning_rr
+    tpms_last_seen_pressure_time_fl tpms_last_seen_pressure_time_fr tpms_last_seen_pressure_time_rl tpms_last_seen_pressure_time_rr
+    climate_keeper_mode
     active_route_destination active_route_latitude active_route_longitude active_route_energy_at_arrival
     active_route_miles_to_arrival active_route_minutes_to_arrival active_route_traffic_minutes_delay
     center_display_state
+    driver_front_window_open driver_rear_window_open passenger_front_window_open passenger_rear_window_open
+    driver_assist exterior_trim performance_package battery_heater now_playing_title media_playback_status
+    driver_temp_setting passenger_temp_setting
+    charge_port_color conn_charge_cable scheduled_charging_mode scheduled_charging_pending
+    cabin_overheat_protection cabin_overheat_protection_actively_cooling
   )a
 
   def into(nil, %{state: :start, healthy?: healthy?, car: car}) do
@@ -130,6 +137,10 @@ defmodule TeslaMate.Vehicles.Vehicle.Summary do
       locked: get_in_struct(vehicle, [:vehicle_state, :locked]),
       sentry_mode: get_in_struct(vehicle, [:vehicle_state, :sentry_mode]),
       windows_open: window_open(vehicle),
+      driver_front_window_open: window_state(vehicle, :fd_window),
+      driver_rear_window_open: window_state(vehicle, :rd_window),
+      passenger_front_window_open: window_state(vehicle, :fp_window),
+      passenger_rear_window_open: window_state(vehicle, :rp_window),
       doors_open: doors_open(vehicle),
       driver_front_door_open: driver_front_door_open(vehicle),
       driver_rear_door_open: driver_rear_door_open(vehicle),
@@ -149,7 +160,31 @@ defmodule TeslaMate.Vehicles.Vehicle.Summary do
       tpms_soft_warning_fr: get_in_struct(vehicle, [:vehicle_state, :tpms_soft_warning_fr]),
       tpms_soft_warning_rl: get_in_struct(vehicle, [:vehicle_state, :tpms_soft_warning_rl]),
       tpms_soft_warning_rr: get_in_struct(vehicle, [:vehicle_state, :tpms_soft_warning_rr]),
-      center_display_state: get_in_struct(vehicle, [:vehicle_state, :center_display_state])
+      tpms_last_seen_pressure_time_fl: get_in_struct(vehicle, [:vehicle_state, :tpms_last_seen_pressure_time_fl]),
+      tpms_last_seen_pressure_time_fr: get_in_struct(vehicle, [:vehicle_state, :tpms_last_seen_pressure_time_fr]),
+      tpms_last_seen_pressure_time_rl: get_in_struct(vehicle, [:vehicle_state, :tpms_last_seen_pressure_time_rl]),
+      tpms_last_seen_pressure_time_rr: get_in_struct(vehicle, [:vehicle_state, :tpms_last_seen_pressure_time_rr]),
+      center_display_state: get_in_struct(vehicle, [:vehicle_state, :center_display_state]),
+      now_playing_title: get_in_struct(vehicle, [:vehicle_state, :now_playing_title]),
+      media_playback_status: get_in_struct(vehicle, [:vehicle_state, :media_playback_status]),
+
+      # Climate State (additional)
+      battery_heater: get_in_struct(vehicle, [:climate_state, :battery_heater]),
+      driver_temp_setting: get_in_struct(vehicle, [:climate_state, :driver_temp_setting]),
+      passenger_temp_setting: get_in_struct(vehicle, [:climate_state, :passenger_temp_setting]),
+      cabin_overheat_protection: get_in_struct(vehicle, [:climate_state, :cabin_overheat_protection]),
+      cabin_overheat_protection_actively_cooling: get_in_struct(vehicle, [:climate_state, :cabin_overheat_protection_actively_cooling]),
+
+      # Charge State (additional)
+      charge_port_color: charge(vehicle, :charge_port_color),
+      conn_charge_cable: charge(vehicle, :conn_charge_cable),
+      scheduled_charging_mode: charge(vehicle, :scheduled_charging_mode),
+      scheduled_charging_pending: charge(vehicle, :scheduled_charging_pending),
+
+      # Vehicle Config
+      driver_assist: get_in_struct(vehicle, [:vehicle_config, :driver_assist]),
+      exterior_trim: get_in_struct(vehicle, [:vehicle_config, :exterior_trim]),
+      performance_package: get_in_struct(vehicle, [:vehicle_config, :performance_package])
     }
   end
 
@@ -166,6 +201,15 @@ defmodule TeslaMate.Vehicles.Vehicle.Summary do
   end
 
   defp plugged_in(_vehicle), do: nil
+
+  defp window_state(%Vehicle{vehicle_state: %VehicleState{} = vs}, field) do
+    case Map.get(vs, field) do
+      v when is_number(v) -> v > 0
+      _ -> nil
+    end
+  end
+
+  defp window_state(_vehicle, _field), do: nil
 
   defp window_open(%Vehicle{vehicle_state: vehicle_state}) do
     case vehicle_state do

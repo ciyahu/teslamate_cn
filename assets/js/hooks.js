@@ -101,8 +101,10 @@ import markerShadow from "leaflet/dist/images/marker-shadow.png";
 const icon = new Icon({
   iconUrl: markerIcon,
   shadowUrl: markerShadow,
-  iconAnchor: [12, 40],
-  popupAnchor: [0, -25],
+  iconSize: [50, 82],
+  iconAnchor: [25, 82],
+  shadowSize: [82, 82],
+  popupAnchor: [0, -50],
 });
 
 const DirectionArrow = CircleMarker.extend({
@@ -110,7 +112,7 @@ const DirectionArrow = CircleMarker.extend({
     this._heading = heading;
     CircleMarker.prototype.initialize.call(this, latLng, {
       fillOpacity: 1,
-      radius: 5,
+      radius: 10,
       ...options,
     });
   },
@@ -132,77 +134,282 @@ const DirectionArrow = CircleMarker.extend({
       `translate(${x},${y}) rotate(${this._heading})`,
     );
 
-    const path = this._empty() ? "" : `M0,${3} L-4,${5} L0,${-5} L4,${5} z}`;
+    const path = this._empty() ? "" : `M0,${6} L-8,${10} L0,${-10} L8,${10} z}`;
 
     this._renderer._setPath(this, path);
   },
 });
 
+const PI = 3.1415926535897932384626;
+const A = 6378245.0;
+const EE = 0.00669342162296594323;
+
+function outOfChina(lat, lng) {
+  return lng < 72.004 || lng > 137.8347 || lat < 0.8293 || lat > 55.8271;
+}
+
+function transformLat(x, y) {
+  let ret =
+    -100.0 +
+    2.0 * x +
+    3.0 * y +
+    0.2 * y * y +
+    0.1 * x * y +
+    0.2 * Math.sqrt(Math.abs(x));
+  ret +=
+    ((20.0 * Math.sin(6.0 * x * PI) + 20.0 * Math.sin(2.0 * x * PI)) * 2.0) /
+    3.0;
+  ret +=
+    ((20.0 * Math.sin(y * PI) + 40.0 * Math.sin((y / 3.0) * PI)) * 2.0) /
+    3.0;
+  ret +=
+    ((160.0 * Math.sin((y / 12.0) * PI) +
+      320.0 * Math.sin((y * PI) / 30.0)) *
+      2.0) /
+    3.0;
+  return ret;
+}
+
+function transformLon(x, y) {
+  let ret =
+    300.0 +
+    x +
+    2.0 * y +
+    0.1 * x * x +
+    0.1 * x * y +
+    0.1 * Math.sqrt(Math.abs(x));
+  ret +=
+    ((20.0 * Math.sin(6.0 * x * PI) + 20.0 * Math.sin(2.0 * x * PI)) * 2.0) /
+    3.0;
+  ret +=
+    ((20.0 * Math.sin(x * PI) + 40.0 * Math.sin((x / 3.0) * PI)) * 2.0) /
+    3.0;
+  ret +=
+    ((150.0 * Math.sin((x / 12.0) * PI) +
+      300.0 * Math.sin((x / 30.0) * PI)) *
+      2.0) /
+    3.0;
+  return ret;
+}
+
+function wgs84ToGcj02(lat, lng) {
+  lat = Number.parseFloat(lat);
+  lng = Number.parseFloat(lng);
+
+  if (outOfChina(lat, lng)) {
+    return { lat, lng };
+  }
+
+  const dLat = transformLat(lng - 105.0, lat - 35.0);
+  const dLon = transformLon(lng - 105.0, lat - 35.0);
+  const radLat = (lat * PI) / 180.0;
+  let magic = Math.sin(radLat);
+  magic = 1 - EE * magic * magic;
+  const sqrtMagic = Math.sqrt(magic);
+
+  const adjustedLat =
+    (dLat * 180.0) / (((A * (1 - EE)) / (magic * sqrtMagic)) * PI);
+  const adjustedLon =
+    (dLon * 180.0) / ((A / sqrtMagic) * Math.cos(radLat) * PI);
+
+  return {
+    lat: lat + adjustedLat,
+    lng: lng + adjustedLon,
+  };
+}
+
+function gcj02ToWgs84(lat, lng) {
+  lat = Number.parseFloat(lat);
+  lng = Number.parseFloat(lng);
+
+  if (outOfChina(lat, lng)) {
+    return { lat, lng };
+  }
+
+  const { lat: gcjLat, lng: gcjLng } = wgs84ToGcj02(lat, lng);
+
+  return {
+    lat: lat * 2 - gcjLat,
+    lng: lng * 2 - gcjLng,
+  };
+}
+
+function toLatLng(lat, lng) {
+  return new LatLng(Number.parseFloat(lat), Number.parseFloat(lng));
+}
+
+function toGcjLatLng(lat, lng) {
+  const coords = wgs84ToGcj02(lat, lng);
+  return toLatLng(coords.lat, coords.lng);
+}
+
 function createMap(opts) {
   const map = new M(opts.elId != null ? `map_${opts.elId}` : "map", opts);
 
-  const osm = new TileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-  });
+  const isDarkMode =
+    document.documentElement.getAttribute("data-theme") === "dark";
 
-  if (opts.enableHybridLayer) {
-    const hybrid = new TileLayer(
-      "http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}",
-      { maxZoom: 20, subdomains: ["mt0", "mt1", "mt2", "mt3"] },
-    );
+  const tileLayer = window.TENCENT_MAP_ENABLED
+    ? new TileLayer(
+        "https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={y}&type=vector&styleid=0",
+        {
+          maxZoom: 18,
+          subdomains: ["0", "1", "2", "3"],
+          tms: true,
+          className: isDarkMode ? "dark-mode-tiles" : "",
+        },
+      )
+    : new TileLayer(
+        "https://wprd0{s}.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=1&x={x}&y={y}&z={z}",
+        {
+          maxZoom: 19,
+          subdomains: ["1", "2", "3", "4"],
+          className: isDarkMode ? "dark-mode-tiles" : "",
+        },
+      );
 
-    new Control.Layers({ OSM: osm, Hybrid: hybrid }).addTo(map);
-  }
-
-  map.addLayer(osm);
+  map.addLayer(tileLayer);
 
   return map;
+}
+
+function updateMapLink(carId, lat, lng) {
+  const link = document.getElementById(`map_link_${carId}`);
+  if (link) {
+    link.href = `https://apis.map.qq.com/uri/v1/marker?marker=coord:${lat},${lng};title:车辆位置;addr:车辆位置&referer=TeslaMate`;
+  }
+}
+
+function mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, carId) {
+  const center = new TMap.LatLng(lat, lng);
+  const headingVal = (360 - (Number.parseFloat(heading) || 0)) % 360;
+
+  const map = new TMap.Map(containerId, {
+    center: center,
+    zoom: initialZoom,
+    baseMap: { type: "vector" },
+    control: false,
+  });
+  map.removeControl(TMap.constants.DEFAULT_CONTROL_ID.ZOOM);
+  map.removeControl(TMap.constants.DEFAULT_CONTROL_ID.ROTATION);
+
+  const marker = new TMap.MultiMarker({
+    map: map,
+    styles: {
+      marker: new TMap.MarkerStyle({
+        width: 30,
+        height: 30,
+        anchor: { x: 15, y: 15 },
+        src: "/images/car.png",
+        rotate: headingVal,
+      }),
+    },
+    geometries: [{
+      id: "marker",
+      styleId: "marker",
+      position: center,
+    }],
+  });
+
+  updateMapLink(carId, lat, lng);
+
+  if (isArrow) {
+    $position.addEventListener("change", () => {
+      const [rawLat, rawLng, heading] = $position.value.split(",");
+      const { lat, lng } = wgs84ToGcj02(
+        Number.parseFloat(rawLat),
+        Number.parseFloat(rawLng),
+      );
+      const newPos = new TMap.LatLng(lat, lng);
+      const newHeading = (360 - (Number.parseFloat(heading) || 0)) % 360;
+      marker.setStyles({
+        marker: new TMap.MarkerStyle({
+          width: 30,
+          height: 30,
+          anchor: { x: 15, y: 15 },
+          src: "/images/car.png",
+          rotate: newHeading,
+        }),
+      });
+      marker.updateGeometries([{
+        id: "marker",
+        styleId: "marker",
+        position: newPos,
+      }]);
+      map.setCenter(newPos);
+      updateMapLink(carId, lat, lng);
+    });
+  }
+}
+
+function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, carId) {
+  const leafletMap = new M(containerId, {
+    zoomControl: false,
+    boxZoom: false,
+    doubleClickZoom: true,
+    keyboard: false,
+    scrollWheelZoom: true,
+    tap: true,
+    dragging: true,
+    touchZoom: true,
+  });
+
+  const isDarkMode =
+    document.documentElement.getAttribute("data-theme") === "dark";
+
+  const gaode = new TileLayer(
+    "https://wprd0{s}.is.autonavi.com/appmaptile?lang=zh_CN&size=1&style=7&scl=1&x={x}&y={y}&z={z}",
+    {
+      maxZoom: 19,
+      subdomains: ["1", "2", "3", "4"],
+      className: isDarkMode ? "dark-mode-tiles" : "",
+    },
+  );
+
+  leafletMap.addLayer(gaode);
+
+  const marker = isArrow
+    ? new DirectionArrow([lat, lng], heading)
+    : new Marker([lat, lng], { icon });
+
+  leafletMap.setView([lat, lng], initialZoom);
+  marker.addTo(leafletMap);
+
+  updateMapLink(carId, lat, lng);
+
+  if (isArrow) {
+    $position.addEventListener("change", () => {
+      const [rawLat, rawLng, heading] = $position.value.split(",");
+      const { lat, lng } = wgs84ToGcj02(
+        Number.parseFloat(rawLat),
+        Number.parseFloat(rawLng),
+      );
+      marker.setHeading(heading);
+      marker.setLatLng([lat, lng]);
+      leafletMap.setView([lat, lng], leafletMap.getZoom());
+      updateMapLink(carId, lat, lng);
+    });
+  }
 }
 
 export const SimpleMap = {
   mounted() {
     const $position = document.querySelector(`#position_${this.el.dataset.id}`);
-
-    const map = createMap({
-      elId: this.el.dataset.id,
-      zoomControl: !!this.el.dataset.zoom,
-      boxZoom: false,
-      doubleClickZoom: false,
-      keyboard: false,
-      scrollWheelZoom: false,
-      tap: false,
-      dragging: false,
-      touchZoom: false,
-    });
-
+    const initialZoom = Number.parseInt(this.el.dataset.initialZoom ?? "15", 10);
+    const carId = this.el.dataset.id;
+    const containerId = `map_${carId}`;
     const isArrow = this.el.dataset.marker === "arrow";
-    const [lat, lng, heading] = $position.value.split(",");
 
-    const marker = isArrow
-      ? new DirectionArrow([lat, lng], heading)
-      : new Marker([lat, lng], { icon });
+    const [rawLat, rawLng, heading] = $position.value.split(",");
+    const { lat, lng } = wgs84ToGcj02(
+      Number.parseFloat(rawLat),
+      Number.parseFloat(rawLng),
+    );
 
-    map.setView([lat, lng], 17);
-    marker.addTo(map);
-
-    map.removeControl(map.zoomControl);
-
-    map.on("mouseover", function (e) {
-      map.addControl(map.zoomControl);
-    });
-    map.on("mouseout", function (e) {
-      map.removeControl(map.zoomControl);
-    });
-
-    if (isArrow) {
-      const setView = () => {
-        const [lat, lng, heading] = $position.value.split(",");
-        marker.setHeading(heading);
-        marker.setLatLng([lat, lng]);
-        map.setView([lat, lng], map.getZoom());
-      };
-
-      $position.addEventListener("change", setView);
+    if (window.TENCENT_MAP_ENABLED && window.TMap) {
+      mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, carId);
+    } else {
+      mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, carId);
     }
   },
 };
@@ -216,6 +423,78 @@ export const TriggerChange = {
 import("leaflet-control-geocoder");
 import("@geoman-io/leaflet-geoman-free");
 
+function mountLeafletGeoFenceMap($latitude, $longitude, $radius) {
+  const location = toGcjLatLng($latitude.value, $longitude.value);
+
+  const controlOpts = {
+    position: "topleft",
+    cutPolygon: false,
+    drawCircle: false,
+    drawCircleMarker: false,
+    drawMarker: false,
+    drawPolygon: false,
+    drawPolyline: false,
+    drawRectangle: false,
+    removalMode: false,
+  };
+
+  const editOpts = {
+    allowSelfIntersection: false,
+    preventMarkerRemoval: true,
+  };
+
+  const map = createMap({});
+  map.setView(location, 17, { animate: false });
+  map.pm.setLang(LANG);
+  map.pm.addControls(controlOpts);
+  map.pm.enableGlobalEditMode(editOpts);
+
+  const circle = new Circle(location, { radius: $radius.value })
+    .addTo(map)
+    .on("pm:edit", (e) => {
+      const { lat, lng } = e.target.getLatLng();
+      const radius = Math.round(e.target.getRadius());
+      const { lat: wgsLat, lng: wgsLng } = gcj02ToWgs84(lat, lng);
+
+      $radius.value = radius;
+      $latitude.value = wgsLat;
+      $longitude.value = wgsLng;
+
+      const mBox = map.getBounds();
+      const cBox = circle.getBounds();
+      const bounds = mBox.contains(cBox) ? mBox : cBox;
+      map.fitBounds(bounds);
+    });
+
+  new Control.geocoder({ defaultMarkGeocode: false })
+    .on("markgeocode", (e) => {
+      const { bbox, center } = e.geocode;
+      const gcjCenter = toGcjLatLng(center.lat, center.lng);
+
+      const poly = L.polygon([
+        toGcjLatLng(bbox.getSouthEast().lat, bbox.getSouthEast().lng),
+        toGcjLatLng(bbox.getNorthEast().lat, bbox.getNorthEast().lng),
+        toGcjLatLng(bbox.getNorthWest().lat, bbox.getNorthWest().lng),
+        toGcjLatLng(bbox.getSouthWest().lat, bbox.getSouthWest().lng),
+      ]);
+
+      circle.setLatLng(gcjCenter);
+
+      const lBox = poly.getBounds();
+      const cBox = circle.getBounds();
+      const bounds = cBox.contains(lBox) ? cBox : lBox;
+
+      map.fitBounds(bounds);
+      map.pm.enableGlobalEditMode();
+
+      $latitude.value = center.lat;
+      $longitude.value = center.lng;
+    })
+    .addTo(map);
+
+  map.fitBounds(circle.getBounds(), { animate: false });
+}
+
 export const Map = {
   mounted() {
     const geoFence = (name) =>
@@ -225,74 +504,7 @@ export const Map = {
     const $latitude = geoFence("latitude");
     const $longitude = geoFence("longitude");
 
-    const location = new LatLng($latitude.value, $longitude.value);
-
-    const controlOpts = {
-      position: "topleft",
-      cutPolygon: false,
-      drawCircle: false,
-      drawCircleMarker: false,
-      drawMarker: false,
-      drawPolygon: false,
-      drawPolyline: false,
-      drawRectangle: false,
-      removalMode: false,
-    };
-
-    const editOpts = {
-      allowSelfIntersection: false,
-      preventMarkerRemoval: true,
-    };
-
-    const map = createMap({ enableHybridLayer: true });
-    map.setView(location, 17, { animate: false });
-    map.pm.setLang(LANG);
-    map.pm.addControls(controlOpts);
-    map.pm.enableGlobalEditMode(editOpts);
-
-    const circle = new Circle(location, { radius: $radius.value })
-      .addTo(map)
-      .on("pm:edit", (e) => {
-        const { lat, lng } = e.target.getLatLng();
-        const radius = Math.round(e.target.getRadius());
-
-        $radius.value = radius;
-        $latitude.value = lat;
-        $longitude.value = lng;
-
-        const mBox = map.getBounds();
-        const cBox = circle.getBounds();
-        const bounds = mBox.contains(cBox) ? mBox : cBox;
-        map.fitBounds(bounds);
-      });
-
-    new Control.geocoder({ defaultMarkGeocode: false })
-      .on("markgeocode", (e) => {
-        const { bbox, center } = e.geocode;
-
-        const poly = L.polygon([
-          bbox.getSouthEast(),
-          bbox.getNorthEast(),
-          bbox.getNorthWest(),
-          bbox.getSouthWest(),
-        ]);
-
-        circle.setLatLng(center);
-
-        const lBox = poly.getBounds();
-        const cBox = circle.getBounds();
-        const bounds = cBox.contains(lBox) ? cBox : lBox;
-
-        map.fitBounds(bounds);
-        map.pm.enableGlobalEditMode();
-
-        const { lat, lng } = center;
-        $latitude.value = lat;
-        $longitude.value = lng;
-      })
-      .addTo(map);
-
-    map.fitBounds(circle.getBounds(), { animate: false });
+    mountLeafletGeoFenceMap($latitude, $longitude, $radius);
   },
 };
 
@@ -335,7 +547,6 @@ export const ThemeSelector = {
         const themeMode = e.target.value;
         document.documentElement.setAttribute("data-theme-mode", themeMode);
 
-        // Apply theme immediately
         let actualTheme = themeMode;
         if (themeMode === "system") {
           actualTheme = window.matchMedia("(prefers-color-scheme: dark)")
