@@ -123,7 +123,7 @@
         <% end %>
         <%= unless is_nil(@summary.latitude) or is_nil(@summary.longitude) do %>
           <a id={"map_link_#{@car.id}"}
-             href="#"
+             href={"https://apis.map.qq.com/uri/v1/marker?marker=coord:#{@summary.latitude},#{@summary.longitude};title:车辆位置;addr:车辆位置&referer=TeslaMate"}
              target="_blank"
              rel="noopener noreferrer"
              class="icon has-text-inherit has-tooltip-top has-tooltip-left-mobile"
