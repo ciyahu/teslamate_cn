@@ -117,7 +117,7 @@ import {
 
 function createCarIcon(heading) {
   const parsedHeading = Number.parseFloat(heading);
-  const rotation = Number.isFinite(parsedHeading) ? (360 - parsedHeading) % 360 : 0;
+  const rotation = Number.isFinite(parsedHeading) ? parsedHeading : 0;
 
   return new DivIcon({
     className: "leaflet-car-marker",
