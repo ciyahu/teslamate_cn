@@ -55,12 +55,53 @@
         document.documentElement.setAttribute('data-theme', actualTheme);
       })();
     </script>
+    <script>
+      window.TENCENT_MAP_ENABLED = <%= !!(@conn.assigns.settings.tencent_map_enabled) %>;
+
+      if (window.TENCENT_MAP_ENABLED) {
+        (function() {
+          const authErrorText = "鉴权失败，请传入正确的key";
+
+          const hideTencentMapAuthError = function(root) {
+            if (!root || !root.querySelectorAll) return;
+
+            const candidates = root.matches && root.matches("div") ? [root] : [];
+            candidates.push.apply(candidates, Array.from(root.querySelectorAll("div")));
+
+            candidates.forEach(function(node) {
+              if (!node.textContent || !node.textContent.includes(authErrorText)) return;
+
+              const overlay = node.closest("div[style*='position: absolute']") || node;
+              overlay.style.display = "none";
+              overlay.setAttribute("aria-hidden", "true");
+            });
+          };
+
+          const start = function() {
+            hideTencentMapAuthError(document.body);
+
+            new MutationObserver(function(mutations) {
+              mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                  if (node.nodeType === Node.ELEMENT_NODE) {
+                    hideTencentMapAuthError(node);
+                  }
+                });
+              });
+            }).observe(document.body, { childList: true, subtree: true });
+          };
+
+          if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", start, { once: true });
+          } else {
+            start();
+          }
+        })();
+      }
+    </script>
     <%= if @conn.assigns.settings.tencent_map_enabled do %>
       <script src="https://map.qq.com/api/gljs?v=1.exp&key="></script>
     <% end %>
-    <script>
-      window.TENCENT_MAP_ENABLED = <%= !!(@conn.assigns.settings.tencent_map_enabled) %>;
-    </script>
     <script
       defer
       phx-track-static
