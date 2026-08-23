@@ -1,0 +1,95 @@
+name: "Code Check"
+
+on:
+  push:
+    branches:
+      - main
+      - "codex/**"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  MIX_ENV: test
+  ELIXIR_ASSERT_TIMEOUT: 1000
+
+jobs:
+  check:
+    name: Compile, test, and build assets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    services:
+      db:
+        image: postgres:18-trixie
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout selected ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+
+      - name: Show check source
+        run: |
+          echo "Checking ref: $GITHUB_REF"
+          git rev-parse --short HEAD
+
+      - name: Setup Elixir and cache dependencies
+        uses: ./.github/actions/setup-elixir-and-cache-deps
+        with:
+          mix-env: test
+          ELIXIR_ASSERT_TIMEOUT: ${{ env.ELIXIR_ASSERT_TIMEOUT }}
+
+      - name: Compile without warnings
+        run: mix compile --warnings-as-errors
+
+      - name: Run tests
+        run: mix test --warnings-as-errors
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: assets/package-lock.json
+
+      - name: Install asset dependencies
+        run: npm --prefix assets ci
+
+      - name: Build assets
+        run: npm --prefix assets run deploy
+
+      - name: Validate Grafana dashboards
+        run: |
+          node - <<'NODE'
+          const fs = require("fs");
+          const path = require("path");
+
+          function walk(dir) {
+            return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+              const fullPath = path.join(dir, entry.name);
+              return entry.isDirectory() ? walk(fullPath) : [fullPath];
+            });
+          }
+
+          for (const file of walk("grafana/dashboards")) {
+            if (file.endsWith(".json")) {
+              JSON.parse(fs.readFileSync(file, "utf8"));
+            }
+          }
+
+          console.log("Grafana dashboard JSON OK");
+          NODE
