@@ -120,6 +120,7 @@ nav.navbar {
     justify-content: center;
     align-items: center;
     border-radius: 6px 6px 0 0;
+    z-index: 0;
 
     .leaflet-control-attribution.leaflet-control {
       display: none;
@@ -133,10 +134,11 @@ nav.navbar {
       position: absolute;
       top: 0.5rem;
       right: 0.5rem;
-      z-index: 1000;
+      z-index: 10001;
       width: 2rem;
       height: 2rem;
       padding: 0;
+      pointer-events: auto;
       border-color: var(
         --map-fullscreen-button-border-color,
         rgba(36, 41, 46, 0.14)

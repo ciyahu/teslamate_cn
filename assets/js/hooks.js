@@ -374,6 +374,12 @@ function mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $
     setInteractive() {},
     invalidate(callback) {
       window.setTimeout(() => {
+        if (map.resize) {
+          map.resize();
+        }
+        if (map.getCenter) {
+          map.setCenter(map.getCenter());
+        }
         if (callback) callback();
       }, 0);
     },
@@ -383,6 +389,9 @@ function mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $
       }
       if (marker.setMap) {
         marker.setMap(null);
+      }
+      if (map.destroy) {
+        map.destroy();
       }
     },
   };
