@@ -404,9 +404,9 @@ function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $
     doubleClickZoom: false,
     keyboard: false,
     scrollWheelZoom: false,
-    tap: false,
-    dragging: false,
-    touchZoom: false,
+    tap: true,
+    dragging: true,
+    touchZoom: true,
   });
 
   const isDarkMode =
@@ -468,11 +468,8 @@ function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $
       for (const handler of [
         leafletMap.boxZoom,
         leafletMap.doubleClickZoom,
-        leafletMap.dragging,
         leafletMap.keyboard,
         leafletMap.scrollWheelZoom,
-        leafletMap.tap,
-        leafletMap.touchZoom,
       ]) {
         if (handler) {
           enabled ? handler.enable() : handler.disable();
