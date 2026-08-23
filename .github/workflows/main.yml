@@ -23,6 +23,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Show build source
+        run: |
+          echo "Building ref: $GITHUB_REF"
+          git rev-parse --short HEAD
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

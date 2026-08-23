@@ -55,12 +55,12 @@ sudo apt install erlang erlang-dev erlang-syntax-tools elixir
 </details>
 
 <details>
-  <summary>Grafana (v13.0.1+)</summary>
+  <summary>Grafana (v13.1.3+)</summary>
 
 ```bash
 sudo apt-get install -y apt-transport-https software-properties-common
-sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
-wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+sudo add-apt-repository "deb https://apt.grafana.com stable main"
+wget -q -O - https://apt.grafana.com/gpg-full.key | sudo apt-key add -
 sudo apt-get update
 sudo apt-get install -y grafana
 sudo systemctl start grafana-server
@@ -154,8 +154,8 @@ sudo localectl set-locale LANG=en_US.UTF-8
 
 ## Starting TeslaMate at boot time
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 <Tabs
 defaultValue="systemd"

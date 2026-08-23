@@ -5,10 +5,11 @@
   ];
 
   perSystem =
-    { config
-    , pkgs
-    , lib
-    , ...
+    {
+      config,
+      pkgs,
+      lib,
+      ...
     }:
     # legacy
     let
@@ -70,7 +71,7 @@
           export MQTT_PORT="${toString mosquitto_port}"
           export RELEASE_COOKIE="1234567890123456789"
           export TZDATA_DIR="$PWD/tzdata"
-          export MIX_REBAR3="${pkgs.beam27Packages.rebar3}/bin/rebar3";
+          export MIX_REBAR3="${config.teslamate.rebar3}/bin/rebar3";
           mix deps.get
         '';
         enterTest = ''
@@ -81,6 +82,9 @@
         };
         process.managers.process-compose = {
           port = process_compose_port;
+          # The TUI keeps `devenv up` in the foreground. To run the services
+          # non-interactively, start them detached
+          # with `devenv up --detached` and stop them via `devenv processes stop`.
           tui.enable = true;
         };
         services.postgres = {
@@ -88,7 +92,7 @@
           package = pkgs.postgresql;
           listen_addresses = "127.0.0.1";
           port = postgres_port;
-          initialDatabases = [{ name = "teslamate"; }];
+          initialDatabases = [ { name = "teslamate"; } ];
           initialScript = ''
             CREATE USER teslamate with encrypted password 'your_secure_password_here';
             GRANT ALL PRIVILEGES ON DATABASE teslamate TO teslamate;

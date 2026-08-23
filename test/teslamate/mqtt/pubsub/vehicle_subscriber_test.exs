@@ -1,15 +1,41 @@
 defmodule TeslaMate.Mqtt.PubSub.VehicleSubscriberTest do
   use TeslaMate.DataCase, async: true
 
+  import TestHelper, only: [drain_discovery_configs: 0]
+
   alias TeslaMate.Mqtt.PubSub.VehicleSubscriber
   alias TeslaMate.Vehicles.Vehicle.Summary
   alias TeslaMate.Locations.GeoFence
 
-  defp start_subscriber(name, car_id, namespace \\ nil) do
+  defmodule BlockingPublisher do
+    def publish(test_pid, topic, message, opts) do
+      send(test_pid, {__MODULE__, {:publish, topic, message, opts}, self()})
+
+      if String.ends_with?(topic, "/healthy") and message == "" do
+        receive do
+          :continue -> :ok
+        end
+      else
+        :ok
+      end
+    end
+  end
+
+  defp start_subscriber(
+         name,
+         car_id,
+         namespace \\ nil,
+         publisher_responses \\ %{},
+         extra_opts \\ []
+       ) do
     publisher_name = :"mqtt_publisher_#{name}"
     vehicles_name = :"vehicles_#{name}"
 
-    {:ok, _pid} = start_supervised({MqttPublisherMock, name: publisher_name, pid: self()})
+    {:ok, _pid} =
+      start_supervised(
+        {MqttPublisherMock, name: publisher_name, pid: self(), responses: publisher_responses}
+      )
+
     {:ok, _pid} = start_supervised({VehiclesMock, name: vehicles_name, pid: self()})
 
     start_supervised(
@@ -20,8 +46,61 @@ defmodule TeslaMate.Mqtt.PubSub.VehicleSubscriberTest do
          namespace: namespace,
          deps_publisher: {MqttPublisherMock, publisher_name},
          deps_vehicles: {VehiclesMock, vehicles_name}
-       ]}
+       ]
+       |> Keyword.merge(extra_opts)}
     )
+  end
+
+  test "starts before retained topic cleanup completes", %{test: name} do
+    vehicles_name = :"vehicles_#{name}"
+    {:ok, _pid} = start_supervised({VehiclesMock, name: vehicles_name, pid: self()})
+
+    test_pid = self()
+
+    task =
+      Task.async(fn ->
+        VehicleSubscriber.start_link(
+          car_id: 0,
+          namespace: nil,
+          deps_publisher: {BlockingPublisher, test_pid},
+          deps_vehicles: {VehiclesMock, vehicles_name}
+        )
+      end)
+
+    assert_receive {VehiclesMock, {:subscribe_to_summary, 0}}
+
+    assert {:ok, {:ok, subscriber_pid}} = Task.yield(task, 2_000)
+
+    send(subscriber_pid, %Summary{healthy: true})
+    send(subscriber_pid, :continue)
+
+    assert_receive {BlockingPublisher, {:publish, "teslamate/cars/0/healthy", message, opts},
+                    from_pid}
+
+    assert {message, opts, from_pid} == {"", [retain: true, qos: 1], subscriber_pid}
+
+    assert_receive {BlockingPublisher,
+                    {:publish, "teslamate/cars/0/healthy", "true", [retain: false, qos: 1]},
+                    _publisher_pid}
+
+    :ok = GenServer.stop(subscriber_pid, :normal, 1_000)
+  end
+
+  @tag :capture_log
+  test "logs retained cleanup publish failures", %{test: name} do
+    topic = "teslamate/cars/0/healthy"
+
+    log =
+      ExUnit.CaptureLog.capture_log(fn ->
+        {:ok, pid} = start_subscriber(name, 0, nil, %{topic => [{:error, :disconnected}]})
+
+        assert_receive {MqttPublisherMock, {:publish, ^topic, "", [retain: true, qos: 1]}}
+
+        send(pid, %Summary{healthy: true})
+        assert_receive {MqttPublisherMock, {:publish, ^topic, "true", [retain: false, qos: 1]}}
+      end)
+
+    assert log =~ "MQTT retained cleanup failed for #{topic}: {:error, :disconnected}"
   end
 
   test "publishes vehicle data", %{test: name} do
@@ -29,11 +108,17 @@ defmodule TeslaMate.Mqtt.PubSub.VehicleSubscriberTest do
 
     assert_receive {VehiclesMock, {:subscribe_to_summary, 0}}
 
+    drain_discovery_configs()
+
     summary = %Summary{
       healthy: true,
       display_name: "Foo",
       odometer: 42_000,
       windows_open: true,
+      driver_front_window_open: true,
+      driver_rear_window_open: false,
+      passenger_front_window_open: false,
+      passenger_rear_window_open: true,
       doors_open: true,
       shift_state: "D",
       state: :online,
@@ -62,7 +147,10 @@ defmodule TeslaMate.Mqtt.PubSub.VehicleSubscriberTest do
       wheel_type: "AeroTurbine19",
       frunk_open: true,
       trunk_open: false,
-      elevation: 100
+      elevation: 100,
+      sun_roof_state: "open",
+      sun_roof_installed: true,
+      sun_roof_percent_open: 80
     }
 
     send(pid, summary)
@@ -135,6 +223,8 @@ defmodule TeslaMate.Mqtt.PubSub.VehicleSubscriberTest do
     {:ok, pid} = start_subscriber(name, 0)
 
     assert_receive {VehiclesMock, {:subscribe_to_summary, 0}}
+
+    drain_discovery_configs()
 
     summary = %Summary{
       plugged_in: false,
@@ -237,10 +327,45 @@ defmodule TeslaMate.Mqtt.PubSub.VehicleSubscriberTest do
     assert_receive {MqttPublisherMock, {:publish, "teslamate/cars/0/version", "3", _}}
   end
 
+  @tag :capture_log
+  test "retries failed values until they are published successfully", %{test: name} do
+    display_name_topic = "teslamate/cars/0/display_name"
+    shift_state_topic = "teslamate/cars/0/shift_state"
+
+    responses = %{
+      display_name_topic => [{:error, :disconnected}, :ok],
+      shift_state_topic => [{:error, :disconnected}, :ok]
+    }
+
+    {:ok, pid} = start_subscriber(name, 0, nil, responses)
+
+    assert_receive {VehiclesMock, {:subscribe_to_summary, 0}}
+
+    summary = %Summary{display_name: "Foo", version: "1"}
+    send(pid, summary)
+
+    assert_receive {MqttPublisherMock, {:publish, ^display_name_topic, "Foo", _}}
+    assert_receive {MqttPublisherMock, {:publish, ^shift_state_topic, "", _}}
+    assert_receive {MqttPublisherMock, {:publish, "teslamate/cars/0/version", "1", _}}
+
+    send(pid, summary)
+
+    assert_receive {MqttPublisherMock, {:publish, ^display_name_topic, "Foo", _}}
+    assert_receive {MqttPublisherMock, {:publish, ^shift_state_topic, "", _}}
+    refute_receive {MqttPublisherMock, {:publish, "teslamate/cars/0/version", "1", _}}
+
+    send(pid, summary)
+
+    refute_receive {MqttPublisherMock, {:publish, ^display_name_topic, "Foo", _}}
+    refute_receive {MqttPublisherMock, {:publish, ^shift_state_topic, "", _}}
+  end
+
   test "allows namespaces", %{test: name} do
     {:ok, pid} = start_subscriber(name, 0, "account_0")
 
     assert_receive {VehiclesMock, {:subscribe_to_summary, 0}}
+
+    drain_discovery_configs()
 
     summary = %Summary{
       display_name: "Foo",
@@ -304,5 +429,82 @@ defmodule TeslaMate.Mqtt.PubSub.VehicleSubscriberTest do
                     {:publish, "teslamate/account_0/cars/0/healthy", "", [retain: false, qos: 1]}}
 
     refute_receive _
+  end
+
+  test "publishes Home Assistant discovery config on the first summary", %{test: name} do
+    {:ok, pid} =
+      start_subscriber(name, 0, nil, %{},
+        discovery: true,
+        discovery_base_url: "https://teslamate.example.com/"
+      )
+
+    assert_receive {VehiclesMock, {:subscribe_to_summary, 0}}
+
+    summary = %Summary{healthy: true, display_name: "Foo", model: "3", state: :online}
+    send(pid, summary)
+
+    # The discovery config messages are emitted synchronously on the first
+    # summary. Wait for and drain them all so they don't carry over to the
+    # refute on the next summary.
+    assert_receive {MqttPublisherMock,
+                    {:publish, "homeassistant/" <> _ = _topic, payload, [retain: true, qos: 1]}},
+                   500
+
+    decoded = Jason.decode!(payload)
+    assert Map.has_key?(decoded, "unique_id")
+    assert Map.has_key?(decoded, "device")
+
+    drain_discovery_configs()
+
+    send(pid, %Summary{summary | version: "1"})
+
+    # No new discovery config should be published on subsequent summaries
+    refute_receive {MqttPublisherMock,
+                    {:publish, "homeassistant/" <> _, _, [retain: true, qos: 1]}}
+  end
+
+  test "clears discovery configs when discovery is disabled", %{test: name} do
+    {:ok, pid} = start_subscriber(name, 0)
+
+    assert_receive {VehiclesMock, {:subscribe_to_summary, 0}}
+
+    # Retained discovery configs are cleared on init so entities are removed
+    # from Home Assistant when discovery is disabled.
+    assert_receive {MqttPublisherMock,
+                    {:publish, "homeassistant/sensor/teslamate_0/display_name/config", "",
+                     [retain: true, qos: 1]}}
+
+    drain_discovery_configs()
+
+    send(pid, %Summary{healthy: true, display_name: "Foo", state: :online})
+
+    # No discovery config should be published when discovery is disabled
+    refute_receive {MqttPublisherMock, {:publish, "homeassistant/" <> _, _, _}}
+  end
+
+  test "starts when the namespace option is absent (MQTT_NAMESPACE unset)", %{test: name} do
+    publisher_name = :"mqtt_publisher_#{name}"
+    vehicles_name = :"vehicles_#{name}"
+
+    {:ok, _pid} =
+      start_supervised({MqttPublisherMock, name: publisher_name, pid: self(), responses: %{}})
+
+    {:ok, _pid} = start_supervised({VehiclesMock, name: vehicles_name, pid: self()})
+
+    # Mqtt.init drops nil options before starting PubSub, so subscribers must
+    # start without a :namespace key (regression: KeyError boot crash in 4.1.0)
+    {:ok, _pid} =
+      start_supervised(
+        {VehicleSubscriber,
+         [
+           name: name,
+           car_id: 0,
+           discovery: false,
+           deps_publisher: {MqttPublisherMock, publisher_name},
+           deps_vehicles: {VehiclesMock, vehicles_name}
+         ]}
+      )
+
+    assert_receive {VehiclesMock, {:subscribe_to_summary, 0}}
   end
 end

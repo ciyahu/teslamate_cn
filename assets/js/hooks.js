@@ -43,6 +43,27 @@ export const LocalTime = {
   },
 };
 
+export const LocalDateTime = {
+  render() {
+    const dateStr = this.el.dataset.date;
+    const date = toLocalDate(dateStr, {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const time = toLocalTime(dateStr);
+    this.el.innerText = `${date}, ${time}`;
+  },
+
+  mounted() {
+    this.render();
+  },
+
+  updated() {
+    this.render();
+  },
+};
+
 export const LocalTimeRange = {
   exec() {
     const date = toLocalDate(this.el.dataset.startDate, {
@@ -313,8 +334,11 @@ function mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $
 
   updateMapLink(carId, lat, lng);
 
+  const resetView = () => map.setCenter(center);
+  let handlePositionChange = null;
+
   if (isArrow) {
-    $position.addEventListener("change", () => {
+    handlePositionChange = () => {
       const [rawLat, rawLng, heading] = $position.value.split(",");
       const { lat, lng } = wgs84ToGcj02(
         Number.parseFloat(rawLat),
@@ -338,20 +362,42 @@ function mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $
       }]);
       map.setCenter(newPos);
       updateMapLink(carId, lat, lng);
-    });
+    };
+
+    $position.addEventListener("change", handlePositionChange);
   }
+
+  return {
+    map,
+    resetView,
+    setZoomControlVisible() {},
+    setInteractive() {},
+    invalidate(callback) {
+      window.setTimeout(() => {
+        if (callback) callback();
+      }, 0);
+    },
+    destroy() {
+      if (handlePositionChange) {
+        $position.removeEventListener("change", handlePositionChange);
+      }
+      if (marker.setMap) {
+        marker.setMap(null);
+      }
+    },
+  };
 }
 
-function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, carId) {
+function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, carId, zoomControl) {
   const leafletMap = new M(containerId, {
-    zoomControl: false,
+    zoomControl,
     boxZoom: false,
-    doubleClickZoom: true,
+    doubleClickZoom: false,
     keyboard: false,
-    scrollWheelZoom: true,
-    tap: true,
-    dragging: true,
-    touchZoom: true,
+    scrollWheelZoom: false,
+    tap: false,
+    dragging: false,
+    touchZoom: false,
   });
 
   const isDarkMode =
@@ -377,8 +423,10 @@ function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $
 
   updateMapLink(carId, lat, lng);
 
+  let handlePositionChange = null;
+
   if (isArrow) {
-    $position.addEventListener("change", () => {
+    handlePositionChange = () => {
       const [rawLat, rawLng, heading] = $position.value.split(",");
       const { lat, lng } = wgs84ToGcj02(
         Number.parseFloat(rawLat),
@@ -388,8 +436,53 @@ function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $
       marker.setLatLng([lat, lng]);
       leafletMap.setView([lat, lng], leafletMap.getZoom());
       updateMapLink(carId, lat, lng);
-    });
+    };
+
+    $position.addEventListener("change", handlePositionChange);
   }
+
+  return {
+    map: leafletMap,
+    resetView() {
+      leafletMap.setView(marker.getLatLng(), initialZoom, { animate: false });
+    },
+    setZoomControlVisible(visible) {
+      if (leafletMap.zoomControl) {
+        if (visible) {
+          leafletMap.addControl(leafletMap.zoomControl);
+        } else {
+          leafletMap.removeControl(leafletMap.zoomControl);
+        }
+      }
+    },
+    setInteractive(enabled) {
+      for (const handler of [
+        leafletMap.boxZoom,
+        leafletMap.doubleClickZoom,
+        leafletMap.dragging,
+        leafletMap.keyboard,
+        leafletMap.scrollWheelZoom,
+        leafletMap.tap,
+        leafletMap.touchZoom,
+      ]) {
+        if (handler) {
+          enabled ? handler.enable() : handler.disable();
+        }
+      }
+    },
+    invalidate(callback) {
+      window.setTimeout(() => {
+        leafletMap.invalidateSize();
+        if (callback) callback();
+      }, 0);
+    },
+    destroy() {
+      if (handlePositionChange) {
+        $position.removeEventListener("change", handlePositionChange);
+      }
+      leafletMap.remove();
+    },
+  };
 }
 
 export const SimpleMap = {
@@ -398,6 +491,12 @@ export const SimpleMap = {
     const initialZoom = Number.parseInt(this.el.dataset.initialZoom ?? "15", 10);
     const carId = this.el.dataset.id;
     const containerId = `map_${carId}`;
+    const $fullscreenButton = this.el.querySelector(".map-fullscreen-button");
+    const $fullscreenIcon = $fullscreenButton
+      ? $fullscreenButton.querySelector(".mdi")
+      : null;
+    this.positionInput = $position;
+    this.fullscreenButton = $fullscreenButton;
     const isArrow = this.el.dataset.marker === "arrow";
 
     const [rawLat, rawLng, heading] = $position.value.split(",");
@@ -406,10 +505,93 @@ export const SimpleMap = {
       Number.parseFloat(rawLng),
     );
 
-    if (window.TENCENT_MAP_ENABLED && window.TMap) {
-      mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, carId);
-    } else {
-      mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, carId);
+    const mapApi =
+      window.TENCENT_MAP_ENABLED && window.TMap
+        ? mountTencentMap(containerId, lat, lng, initialZoom, heading, isArrow, $position, carId)
+        : mountLeafletMap(
+            containerId,
+            lat,
+            lng,
+            initialZoom,
+            heading,
+            isArrow,
+            $position,
+            carId,
+            !!this.el.dataset.zoom,
+          );
+
+    this.mapApi = mapApi;
+    this.map = mapApi.map;
+
+    const setZoomControlVisible = (visible) => mapApi.setZoomControlVisible(visible);
+
+    setZoomControlVisible(false);
+
+    if (this.map.on) {
+      this.map.on("mouseover", () => setZoomControlVisible(true));
+      this.map.on("mouseout", () => {
+        if (!this.el.classList.contains("is-map-fullscreen")) {
+          setZoomControlVisible(false);
+        }
+      });
+    }
+
+    const setFullscreenButtonState = (isFullscreen) => {
+      const label = isFullscreen
+        ? $fullscreenButton.dataset.exitLabel
+        : $fullscreenButton.dataset.enterLabel;
+
+      $fullscreenButton.setAttribute("aria-label", label);
+      $fullscreenButton.dataset.tooltip = label;
+      $fullscreenIcon.classList.toggle("mdi-fullscreen-exit", isFullscreen);
+      $fullscreenIcon.classList.toggle("mdi-fullscreen", !isFullscreen);
+    };
+
+    const toggleFullscreen = () => {
+      const isFullscreen = this.el.classList.toggle("is-map-fullscreen");
+      document.documentElement.classList.toggle("is-clipped", isFullscreen);
+      setFullscreenButtonState(isFullscreen);
+      setZoomControlVisible(isFullscreen);
+      mapApi.setInteractive(isFullscreen);
+      mapApi.invalidate(isFullscreen ? null : mapApi.resetView);
+    };
+
+    if ($fullscreenButton && $fullscreenIcon) {
+      $fullscreenButton.dataset.enterLabel =
+        $fullscreenButton.getAttribute("aria-label");
+      this.handleFullscreenClick = toggleFullscreen;
+      this.handleFullscreenKeyup = (e) => {
+        if (
+          e.key === "Escape" &&
+          this.el.classList.contains("is-map-fullscreen")
+        ) {
+          toggleFullscreen();
+        }
+      };
+
+      $fullscreenButton.addEventListener("click", this.handleFullscreenClick);
+      document.addEventListener("keyup", this.handleFullscreenKeyup);
+    }
+  },
+
+  destroyed() {
+    if (this.fullscreenButton && this.handleFullscreenClick) {
+      this.fullscreenButton.removeEventListener(
+        "click",
+        this.handleFullscreenClick,
+      );
+    }
+
+    if (this.handleFullscreenKeyup) {
+      document.removeEventListener("keyup", this.handleFullscreenKeyup);
+    }
+
+    if (this.el.classList.contains("is-map-fullscreen")) {
+      document.documentElement.classList.remove("is-clipped");
+    }
+
+    if (this.mapApi) {
+      this.mapApi.destroy();
     }
   },
 };
