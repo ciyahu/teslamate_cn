@@ -111,55 +111,28 @@ import {
   LatLng,
   Control,
   Marker,
-  Icon,
+  DivIcon,
   Circle,
-  CircleMarker,
 } from "leaflet";
 
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
+function createCarIcon(heading) {
+  const parsedHeading = Number.parseFloat(heading);
+  const rotation = Number.isFinite(parsedHeading) ? (360 - parsedHeading) % 360 : 0;
 
-const icon = new Icon({
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-  iconSize: [50, 82],
-  iconAnchor: [25, 82],
-  shadowSize: [82, 82],
-  popupAnchor: [0, -50],
-});
-
-const DirectionArrow = CircleMarker.extend({
-  initialize(latLng, heading, options) {
-    this._heading = heading;
-    CircleMarker.prototype.initialize.call(this, latLng, {
-      fillOpacity: 1,
-      radius: 10,
-      ...options,
-    });
-  },
-
-  setHeading(heading) {
-    this._heading = heading;
-    this.redraw();
-  },
-
-  _updatePath() {
-    const { x, y } = this._point;
-
-    if (this._heading === "")
-      return CircleMarker.prototype._updatePath.call(this);
-
-    this.getElement().setAttributeNS(
-      null,
-      "transform",
-      `translate(${x},${y}) rotate(${this._heading})`,
-    );
-
-    const path = this._empty() ? "" : `M0,${6} L-8,${10} L0,${-10} L8,${10} z}`;
-
-    this._renderer._setPath(this, path);
-  },
-});
+  return new DivIcon({
+    className: "leaflet-car-marker",
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    html: `
+      <img
+        src="/images/car.png"
+        alt=""
+        draggable="false"
+        style="width: 30px; height: 30px; transform: rotate(${rotation}deg); transform-origin: 50% 50%;"
+      />
+    `,
+  });
+}
 
 const PI = 3.1415926535897932384626;
 const A = 6378245.0;
@@ -403,7 +376,7 @@ function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $
     boxZoom: false,
     doubleClickZoom: false,
     keyboard: false,
-    scrollWheelZoom: false,
+    scrollWheelZoom: true,
     tap: true,
     dragging: true,
     touchZoom: true,
@@ -423,9 +396,7 @@ function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $
 
   leafletMap.addLayer(gaode);
 
-  const marker = isArrow
-    ? new DirectionArrow([lat, lng], heading)
-    : new Marker([lat, lng], { icon });
+  const marker = new Marker([lat, lng], { icon: createCarIcon(heading) });
 
   leafletMap.setView([lat, lng], initialZoom);
   marker.addTo(leafletMap);
@@ -441,7 +412,7 @@ function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $
         Number.parseFloat(rawLat),
         Number.parseFloat(rawLng),
       );
-      marker.setHeading(heading);
+      marker.setIcon(createCarIcon(heading));
       marker.setLatLng([lat, lng]);
       leafletMap.setView([lat, lng], leafletMap.getZoom());
       updateMapLink(carId, lat, lng);
@@ -469,7 +440,6 @@ function mountLeafletMap(containerId, lat, lng, initialZoom, heading, isArrow, $
         leafletMap.boxZoom,
         leafletMap.doubleClickZoom,
         leafletMap.keyboard,
-        leafletMap.scrollWheelZoom,
       ]) {
         if (handler) {
           enabled ? handler.enable() : handler.disable();
