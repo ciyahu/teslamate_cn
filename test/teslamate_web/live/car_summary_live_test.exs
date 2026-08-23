@@ -589,7 +589,7 @@ defmodule TeslaMateWeb.CarLive.SummaryTest do
     end
 
     @tag :signed_in
-    test "View car location on Google Maps with correct coordinates", %{conn: conn} do
+    test "View car location on Tencent Maps with correct coordinates", %{conn: conn} do
       _car =
         car_fixture(%{
           suspend_min: 60_000,
@@ -626,24 +626,26 @@ defmodule TeslaMateWeb.CarLive.SummaryTest do
       parsed_html = Floki.parse_document!(html)
       assert Floki.find(parsed_html, "a.icon span.mdi.mdi-map-marker") != []
 
-      # Check if the link to Google Maps is present
+      # Check if the link to Tencent Maps is present
       [view] = live_children(parent_view)
       html = render(view)
 
       [link] =
         html
         |> Floki.parse_document!()
-        |> Floki.find("a[href*='google.com/maps']")
+        |> Floki.find("a[href*='apis.map.qq.com/uri/v1/marker']")
 
       {"a", attrs, [_icon_html]} = link
       attrs_map = Map.new(attrs)
 
-      expected_href = "https://www.google.com/maps?q=#{test_latitude},#{test_longitude}"
+      expected_href =
+        "https://apis.map.qq.com/uri/v1/marker?marker=coord:#{test_latitude},#{test_longitude};title:车辆位置;addr:车辆位置&referer=TeslaMate"
+
       assert attrs_map["href"] == expected_href
       assert attrs_map["target"] == "_blank"
       assert attrs_map["rel"] == "noopener noreferrer"
       assert attrs_map["class"] =~ "icon"
-      assert attrs_map["data-tooltip"] == "View car location on Google Maps"
+      assert attrs_map["data-tooltip"] == "在腾讯地图查看车辆位置"
     end
   end
 
