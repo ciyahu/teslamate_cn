@@ -55,11 +55,11 @@
         document.documentElement.setAttribute('data-theme', actualTheme);
       })();
     </script>
-    <%= if @conn.assigns.settings.tencent_map_enabled && @conn.assigns.settings.tencent_map_key do %>
-      <script src={"https://map.qq.com/api/gljs?v=1.exp&key=#{@conn.assigns.settings.tencent_map_key}"}></script>
+    <%= if @conn.assigns.settings.tencent_map_enabled do %>
+      <script src="https://map.qq.com/api/gljs?v=1.exp&key="></script>
     <% end %>
     <script>
-      window.TENCENT_MAP_ENABLED = <%= !!(@conn.assigns.settings.tencent_map_enabled && @conn.assigns.settings.tencent_map_key) %>;
+      window.TENCENT_MAP_ENABLED = <%= !!(@conn.assigns.settings.tencent_map_enabled) %>;
     </script>
     <script
       defer
