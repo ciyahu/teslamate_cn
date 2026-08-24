@@ -43,6 +43,8 @@ defmodule TeslaMate.Vehicles.Vehicle do
 
   @drive_timeout_min 15
 
+  @models_with_prefix ~w(S X 3 Y)
+
   @vin_model_years %{
     "A" => 2010,
     "B" => 2011,
@@ -92,6 +94,10 @@ defmodule TeslaMate.Vehicles.Vehicle do
   def charging_interval, do: interval("POLLING_CHARGING_INTERVAL", 5)
   def minimum_interval, do: interval("POLLING_MINIMUM_INTERVAL", 0)
 
+  @spec format_model(String.t()) :: String.t()
+  def format_model(model) when model in @models_with_prefix, do: "Model #{model}"
+  def format_model(model), do: model
+
   def identify(%Vehicle{display_name: name, vin: vin, vehicle_config: config}) do
     case config do
       %VehicleConfig{
@@ -114,6 +120,7 @@ defmodule TeslaMate.Vehicles.Vehicle do
               "model3" <> _ -> "3"
               "modelx" <> _ -> "X"
               "modely" <> _ -> "Y"
+              "cybertruck" <> _ -> "Cybertruck"
               "lychee" -> "S"
               "tamarind" -> "X"
               _ -> nil
@@ -342,7 +349,7 @@ defmodule TeslaMate.Vehicles.Vehicle do
 
       suspend_min =
         case {data.car.settings, streaming?(data)} do
-          {%CarSettings{use_streaming_api: true}, true} -> 30
+          {%CarSettings{use_streaming_api: true}, true} -> 10
           {%CarSettings{suspend_min: s}, _} -> s
         end
 
@@ -1736,7 +1743,7 @@ defmodule TeslaMate.Vehicles.Vehicle do
   defp try_to_suspend(vehicle, current_state, %Data{car: car} = data) do
     {suspend_after_idle_min, suspend_min, i} =
       case {car.settings, streaming?(data)} do
-        {%CarSettings{use_streaming_api: true}, true} -> {3, 30, 2}
+        {%CarSettings{use_streaming_api: true}, true} -> {3, 10, 2}
         {%CarSettings{suspend_after_idle_min: i, suspend_min: s}, _} -> {i, s, 1}
       end
 

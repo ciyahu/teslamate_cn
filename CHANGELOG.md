@@ -1,5 +1,53 @@
 # Changelog
 
+## [4.2.0] - 2026-08-23
+
+With Fleet Telemetry streaming enabled, TeslaMate now checks every 10 minutes instead of every 30 whether the vehicle has fallen asleep, so sleep transitions show up in dashboards up to 20 minutes sooner — at no extra API cost and with no impact on the vehicle's ability to sleep. We also refined the Home Assistant MQTT discovery, fixed a startup failure that occurred on malformed datasets (two reports) and enhanced the documentation.
+
+**Note for Home Assistant MQTT discovery users:** The opt-in [MQTT discovery](https://docs.teslamate.org/docs/integrations/home_assistant#mqtt-discovery-automatic-configuration) now uses Home Assistant's device-based format; existing entities migrate automatically (#5618, #5629, #5638, #5643).
+Breaking for automations on discovered entities: the Health sensor is inverted (ON = problem), enum states are humanized (`NoPower` → `No Power`), the update-available sensor became an `update` entity, the active route distance reports miles instead of km, and the derived psi tire pressure sensors were removed (set the unit on the bar entities in Home Assistant instead). MQTT topics are unchanged.
+
+To make your TeslaMate experience even better, we have made 20 improvements.
+
+Enjoy!
+
+### New features
+
+- feat(vehicle): identify Cybertruck and show it correctly across UI and MQTT (#5627 - @nebhale)
+
+### Improvements and bug fixes
+
+- fix(vehicle): shorten the streaming suspend probe interval from 30 to 10 minutes (#5600 - @onevcat)
+- feat(mqtt): enrich Home Assistant device metadata and republish on change (#5616 - @nebhale)
+- fix(charging): prevent smallint overflow in energy calculation and recalc migration on battery-side DC readings (5617 - @JakobLichterfeld)
+- feat(mqtt): migrate Home Assistant discovery to device-based configuration (#5618 - @nebhale)
+- feat(mqtt): add missing Home Assistant discovery entities (#5629 - @nebhale)
+- feat: point sign-in token help link to the new tokens docs page (#5642 - @JakobLichterfeld)
+- feat(mqtt): refine Home Assistant discovery entity metadata and semantic (#5638 - @nebhale)
+- feat(mqtt): remove derived Home Assistant psi tire pressure sensors, mark manual YAML as legacy (#5643 - @nebhale)
+
+#### Build, CI, internal
+
+- build(deps): bump tzdata from 1.1.3 to 1.1.4 (#5614 - @mews-se)
+- ci: purge orphaned GHCR attestation referrers (#5622 - @swiffer)
+- test: stop the app in test_helper instead of relying on --no-start (#5615 - @swiffer)
+- build(deps): update flake.lock (#5613)
+- build(deps): update flake.lock (#5645)
+- ci(ghcr): allow manual dispatch to build images for .github PRs (#5646 - @JakobLichterfeld)
+- build(deps): replace `ex_cldr` / `ex_cldr_plugs` with `localize` and `localize_web` (ex_cldr support ends 2027-12-31). Drops compile-time locale download and the Nix `cldr` pin (#5630 - @swiffer, @JakobLichterfeld)
+
+#### Dashboards
+
+- feat(grafana): show start SOC on incomplete charges from the first charge sample (#5644 - @swiffer)
+
+#### Translations
+
+#### Documentation
+
+- doc: improve token and upgrade documentation, restructure sidebar (#5628 - @brianmay)
+- doc: promote token security note to info admonition in docker/nixos install (#5628, #5642 - @JakobLichterfeld)
+- doc: restructure sidebar by user journey (#5642 - @JakobLichterfeld)
+
 ## [4.1.1] - 2026-08-14
 
 Hotfix for 4.1.0, which crashes in a startup loop on installations with MQTT enabled and no `MQTT_NAMESPACE` set. Upgrading is recommended for all MQTT users.
@@ -3046,6 +3094,7 @@ New users need to sign in via the web interface.
 
 ## [1.0.0] - 2019-07-25
 
+[4.2.0]: https://github.com/teslamate-org/teslamate/compare/v4.1.1...v4.2.0
 [4.1.1]: https://github.com/teslamate-org/teslamate/compare/v4.1.0...v4.1.1
 [4.1.0]: https://github.com/teslamate-org/teslamate/compare/v4.0.1...v4.1.0
 [4.0.1]: https://github.com/teslamate-org/teslamate/compare/v4.0.0...v4.0.1
