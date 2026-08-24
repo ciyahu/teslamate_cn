@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  DOCKER_REPO: ciyahu/teslamate2
+  DOCKER_REPO: ciyahu/teslamate
   TAG: latest
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
