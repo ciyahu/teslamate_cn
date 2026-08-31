@@ -60,7 +60,10 @@
 
       if (window.TENCENT_MAP_ENABLED) {
         (function() {
-          const authErrorText = "鉴权失败，请传入正确的key";
+          const authErrorTexts = [
+            "鉴权失败，请传入正确的key",
+            "当前产品鉴权失败，请检查KEY及相关信息是否准确。"
+          ];
 
           const hideTencentMapAuthError = function(root) {
             if (!root || !root.querySelectorAll) return;
@@ -69,7 +72,9 @@
             candidates.push.apply(candidates, Array.from(root.querySelectorAll("div")));
 
             candidates.forEach(function(node) {
-              if (!node.textContent || !node.textContent.includes(authErrorText)) return;
+              if (!node.textContent || !authErrorTexts.some(function(text) {
+                return node.textContent.includes(text);
+              })) return;
 
               const overlay = node.closest("div[style*='position: absolute']") || node;
               overlay.style.display = "none";
