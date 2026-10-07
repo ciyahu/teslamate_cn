@@ -21,6 +21,7 @@ defmodule TeslaMateWeb.SettingsLive.Index do
       refresh_error: nil,
       reloading_vehicles?: false,
       vehicle_reload: nil,
+      show_release_notes: false,
       page_title: gettext("Settings")
     }
 
@@ -44,6 +45,14 @@ defmodule TeslaMateWeb.SettingsLive.Index do
   end
 
   @impl true
+  def handle_event("show_release_notes", _, socket) do
+    {:noreply, assign(socket, show_release_notes: true)}
+  end
+
+  def handle_event("close_release_notes", _, socket) do
+    {:noreply, assign(socket, show_release_notes: false)}
+  end
+
   def handle_event("car", %{"id" => id}, socket) do
     {:noreply, add_params(socket, car: id)}
   end

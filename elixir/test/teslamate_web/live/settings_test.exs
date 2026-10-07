@@ -5,6 +5,28 @@ defmodule TeslaMateWeb.SettingsLiveTest do
 
   import TestHelper, only: [decimal: 1]
 
+  test "opens release notes beside the version and closes the dialog", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/settings")
+    refute has_element?(view, "#release-notes-modal.is-active")
+    assert has_element?(view, ".about #show-release-notes", "更新说明")
+
+    view |> element("#show-release-notes") |> render_click()
+    assert has_element?(view, "#release-notes-modal.is-active")
+    assert has_element?(view, "#release-notes-dialog[role=dialog]", "TeslaMate v4.3.0")
+    assert has_element?(view, "#release-notes-dialog", "本版本保留原有中文 Grafana")
+
+    view |> element("#close-release-notes") |> render_click()
+    refute has_element?(view, "#release-notes-dialog")
+
+    view |> element("#show-release-notes") |> render_click()
+    view |> element("#release-notes-modal .modal-background") |> render_click()
+    refute has_element?(view, "#release-notes-modal.is-active")
+
+    view |> element("#show-release-notes") |> render_click()
+    render_keydown(view, "close_release_notes", %{"key" => "Escape"})
+    refute has_element?(view, "#release-notes-dialog")
+  end
+
   describe "units" do
     test "unit of length: shows 'km' by default", %{conn: conn} do
       assert {:ok, view, html} = live(conn, "/settings")
