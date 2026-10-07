@@ -681,27 +681,27 @@ msgstr ""
 #: lib/teslamate_web/live/settings_live/index.html.heex:339
 #, elixir-autogen, elixir-format
 msgid "Appearance"
-msgstr ""
+msgstr "外观"
 
 #: lib/teslamate_web/live/settings_live/index.html.heex:348
 #, elixir-autogen, elixir-format
 msgid "Dark"
-msgstr ""
+msgstr "深色"
 
 #: lib/teslamate_web/live/settings_live/index.html.heex:347
 #, elixir-autogen, elixir-format
 msgid "Follow System"
-msgstr ""
+msgstr "跟随系统"
 
 #: lib/teslamate_web/live/settings_live/index.html.heex:346
 #, elixir-autogen, elixir-format
 msgid "Light"
-msgstr ""
+msgstr "浅色"
 
 #: lib/teslamate_web/live/settings_live/index.html.heex:336
 #, elixir-autogen, elixir-format
 msgid "Theme"
-msgstr ""
+msgstr "主题"
 
 #: lib/teslamate_web/live/car_live/summary.html.heex:118
 #, elixir-autogen, elixir-format, fuzzy
@@ -859,88 +859,88 @@ msgstr ""
 #: lib/teslamate_web/live/settings_live/index.html.heex:185
 #, elixir-autogen, elixir-format
 msgid "Car Order"
-msgstr ""
+msgstr "车辆排序"
 
 #: lib/teslamate_web/live/settings_live/index.html.heex:216
 #, elixir-autogen, elixir-format
 msgid "Move down"
-msgstr ""
+msgstr "下移"
 
 #: lib/teslamate_web/live/settings_live/index.html.heex:202
 #, elixir-autogen, elixir-format
 msgid "Move up"
-msgstr ""
+msgstr "上移"
 
 #: lib/teslamate_web/live/car_live/index.html.heex:19
 #, elixir-autogen, elixir-format
 msgid "Data collection is disabled for the known vehicles, or they are no longer in your Tesla account."
-msgstr ""
+msgstr "已知车辆的数据采集已关闭，或这些车辆已不在你的 Tesla 账号中。"
 
 #: lib/teslamate_web/live/settings_live/index.html.heex:238
 #, elixir-autogen, elixir-format
 msgid "Fetches the vehicle list from your Tesla account once and starts logging for vehicles that are not logged yet. Running loggers are not interrupted."
-msgstr ""
+msgstr "从你的 Tesla 账号获取一次车辆列表，并开始记录尚未记录的车辆。正在进行的车辆记录不会中断。"
 
 #: lib/teslamate_web/live/vehicle_reload.ex:39
 #, elixir-autogen, elixir-format
 msgid "Fetching the vehicles from the Tesla API failed: %{reason}"
-msgstr ""
+msgstr "从 Tesla API 获取车辆失败：%{reason}"
 
 #: lib/teslamate_web/live/vehicle_reload.ex:15
 #, elixir-autogen, elixir-format
 msgid "No new vehicle was found in your Tesla account."
-msgstr ""
+msgstr "你的 Tesla 账号中没有发现新车辆。"
 
 #: lib/teslamate_web/live/car_live/index.html.heex:12
 #, elixir-autogen, elixir-format
 msgid "No vehicle is logged"
-msgstr ""
+msgstr "暂无正在记录的车辆"
 
 #: lib/teslamate_web/live/car_live/index.html.heex:28
 #, elixir-autogen, elixir-format
 msgid "No vehicle was found when TeslaMate started. Once your vehicle shows up in the Tesla app, reload the vehicle list."
-msgstr ""
+msgstr "TeslaMate 启动时未发现车辆。车辆出现在 Tesla 应用中后，请重新加载车辆列表。"
 
 #: lib/teslamate_web/live/car_live/index.html.heex:41
 #: lib/teslamate_web/live/settings_live/index.html.heex:257
 #, elixir-autogen, elixir-format
 msgid "Reload vehicles"
-msgstr ""
+msgstr "重新加载车辆"
 
 #: lib/teslamate_web/live/vehicle_reload.ex:43
 #, elixir-autogen, elixir-format
 msgid "Reloading the vehicles failed. Please check the logs."
-msgstr ""
+msgstr "重新加载车辆失败，请检查日志。"
 
 #: lib/teslamate_web/live/vehicle_reload.ex:19
 #, elixir-autogen, elixir-format
 msgid "Started logging for: %{names}"
-msgstr ""
+msgstr "已开始记录：%{names}"
 
 #: lib/teslamate_web/live/vehicle_reload.ex:29
 #, elixir-autogen, elixir-format
 msgid "The Tesla API rate limit was exceeded while fetching the vehicles. Please wait a few minutes before reloading."
-msgstr ""
+msgstr "获取车辆时超出了 Tesla API 的请求频率限制，请等待几分钟后重试。"
 
 #: lib/teslamate_web/live/settings_live/index.html.heex:243
 #, elixir-autogen, elixir-format
 msgid "Vehicle list"
-msgstr ""
+msgstr "车辆列表"
 
 #: lib/teslamate_web/live/settings_live/index.html.heex:232
 #, elixir-autogen, elixir-format
 msgid "Vehicles"
-msgstr ""
+msgstr "车辆"
 
 #: lib/teslamate_web/live/vehicle_reload.ex:23
 #, elixir-autogen, elixir-format
 msgid "Your Tesla account does not contain a vehicle yet. Once the vehicle shows up in the Tesla app, reload the vehicle list."
-msgstr ""
+msgstr "你的 Tesla 账号中尚无车辆。车辆出现在 Tesla 应用中后，请重新加载车辆列表。"
 
 #: lib/teslamate_web/live/vehicle_reload.ex:35
 #, elixir-autogen, elixir-format
 msgid "A vehicle could not be saved to the database. Please check the logs."
-msgstr ""
+msgstr "无法将车辆保存到数据库，请检查日志。"
 
 #: lib/teslamate_web/templates/layout/root.html.heex:198
 #, elixir-autogen, elixir-format
