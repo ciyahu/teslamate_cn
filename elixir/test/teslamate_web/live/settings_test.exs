@@ -96,6 +96,7 @@ defmodule TeslaMateWeb.SettingsLiveTest do
 
   describe "global settings" do
     test "changes map provider", %{conn: conn} do
+      TeslaMate.Repo.query!("UPDATE settings SET tencent_map_key = $1", ["legacy-key"])
       assert {:ok, view, html} = live(conn, "/settings")
 
       assert [
@@ -120,6 +121,8 @@ defmodule TeslaMateWeb.SettingsLiveTest do
                |> Floki.find("#global_settings_tencent_map_enabled option")
 
       assert Settings.get_global_settings!().tencent_map_enabled == true
+      assert %{rows: [["legacy-key"]]} =
+               TeslaMate.Repo.query!("SELECT tencent_map_key FROM settings")
     end
 
     test "shows :rated by default", %{conn: conn} do

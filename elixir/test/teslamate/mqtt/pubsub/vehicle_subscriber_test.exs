@@ -382,6 +382,30 @@ defmodule TeslaMate.Mqtt.PubSub.VehicleSubscriberTest do
     assert_receive {MqttPublisherMock, {:publish, "teslamate/cars/0/version", "3", _}}
   end
 
+  test "publishes fork telemetry with retained values", %{test: name} do
+    {:ok, pid} = start_subscriber(name, 0)
+    assert_receive {VehiclesMock, {:subscribe_to_summary, 0}}
+
+    send(pid, %Summary{
+      driver_assist: "TeslaAP4",
+      now_playing_title: "Test track",
+      charge_port_color: "Green",
+      cabin_overheat_protection_actively_cooling: true,
+      tpms_last_seen_pressure_time_fl: 1700000000
+    })
+
+    for {key, value} <- [
+          {"driver_assist", "TeslaAP4"},
+          {"now_playing_title", "Test track"},
+          {"charge_port_color", "Green"},
+          {"cabin_overheat_protection_actively_cooling", "true"},
+          {"tpms_last_seen_pressure_time_fl", "1700000000"}
+        ] do
+      topic = "teslamate/cars/0/#{key}"
+      assert_receive {MqttPublisherMock, {:publish, ^topic, ^value, [retain: true, qos: 1]}}
+    end
+  end
+
   @tag :capture_log
   test "retries failed values until they are published successfully", %{test: name} do
     display_name_topic = "teslamate/cars/0/display_name"
