@@ -422,6 +422,33 @@ body {
   min-height: 100vh;
 }
 
+.release-notes-body {
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+
+  h3, h4 {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  h4 {
+    margin-top: 1.25rem;
+  }
+
+  p, ul {
+    margin-bottom: 0.75rem;
+  }
+
+  ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+  }
+
+  li + li {
+    margin-top: 0.4rem;
+  }
+}
+
 main.section {
   flex: 1;
 }
