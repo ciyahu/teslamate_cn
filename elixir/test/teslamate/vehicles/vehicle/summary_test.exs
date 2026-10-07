@@ -27,6 +27,32 @@ defmodule TeslaMate.Vehicles.Vehicle.SummaryTest do
   end
 
   describe "update_available" do
+    test "preserves fork telemetry from API decoding into the summary" do
+      alias TeslaApi.Vehicle.State
+
+      vehicle = %Vehicle{
+        vehicle_state: State.VehicleState.result(%{
+          "media_info" => %{"now_playing_title" => "Test track", "media_playback_status" => "Playing"},
+          "tpms_last_seen_pressure_time_fl" => 1700000000
+        }),
+        vehicle_config: State.VehicleConfig.result(%{"driver_assist" => "TeslaAP4", "exterior_trim" => "Black"}),
+        climate_state: State.Climate.result(%{"cabin_overheat_protection" => "On", "driver_temp_setting" => 22.0}),
+        charge_state: State.Charge.result(%{"charge_port_color" => "Green", "scheduled_charging_mode" => "StartAt"})
+      }
+
+      summary = Summary.into(vehicle, attrs())
+      assert summary.now_playing_title == "Test track"
+      assert summary.media_playback_status == "Playing"
+      assert summary.tpms_last_seen_pressure_time_fl == 1700000000
+      assert summary.driver_assist == "TeslaAP4"
+      assert summary.exterior_trim == "Black"
+      assert summary.driver_temp_setting == 22.0
+      assert summary.cabin_overheat_protection == "On"
+      assert summary.charge_port_color == "Green"
+      assert summary.scheduled_charging_mode == "StartAt"
+      assert State.VehicleState.result(%{}).now_playing_title == nil
+    end
+
     test "true when status is 'available'" do
       summary = Summary.into(vehicle_with_update("available"), attrs())
       assert summary.update_available == true

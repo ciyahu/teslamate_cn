@@ -95,6 +95,33 @@ defmodule TeslaMateWeb.SettingsLiveTest do
   end
 
   describe "global settings" do
+    test "changes map provider", %{conn: conn} do
+      assert {:ok, view, html} = live(conn, "/settings")
+
+      assert [
+               {"option", [{"value", "true"}], ["腾讯地图"]},
+               {"option", [{"selected", ""}, {"value", "false"}], ["高德地图"]}
+             ] =
+               html
+               |> Floki.parse_document!()
+               |> Floki.find("#global_settings_tencent_map_enabled option")
+
+      assert [] =
+               html
+               |> Floki.parse_document!()
+               |> Floki.find("#global_settings_tencent_map_key")
+
+      assert [
+               {"option", [{"selected", ""}, {"value", "true"}], ["腾讯地图"]},
+               {"option", [{"value", "false"}], ["高德地图"]}
+             ] =
+               render_change(view, :change, %{global_settings: %{tencent_map_enabled: true}})
+               |> Floki.parse_document!()
+               |> Floki.find("#global_settings_tencent_map_enabled option")
+
+      assert Settings.get_global_settings!().tencent_map_enabled == true
+    end
+
     test "shows :rated by default", %{conn: conn} do
       assert {:ok, _view, html} = live(conn, "/settings")
 

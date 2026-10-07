@@ -66,6 +66,10 @@ defmodule TeslaMate.Vehicles.Vehicle.Summary do
           tpms_soft_warning_fr: boolean() | nil,
           tpms_soft_warning_rl: boolean() | nil,
           tpms_soft_warning_rr: boolean() | nil,
+          tpms_last_seen_pressure_time_fl: String.t() | nil,
+          tpms_last_seen_pressure_time_fr: String.t() | nil,
+          tpms_last_seen_pressure_time_rl: String.t() | nil,
+          tpms_last_seen_pressure_time_rr: String.t() | nil,
           climate_keeper_mode: String.t() | nil,
           active_route_destination: String.t() | nil,
           active_route_latitude: float() | nil,
@@ -75,6 +79,20 @@ defmodule TeslaMate.Vehicles.Vehicle.Summary do
           active_route_minutes_to_arrival: float() | nil,
           active_route_traffic_minutes_delay: float() | nil,
           center_display_state: integer() | nil,
+          driver_assist: String.t() | nil,
+          exterior_trim: String.t() | nil,
+          performance_package: String.t() | nil,
+          battery_heater: boolean() | nil,
+          now_playing_title: String.t() | nil,
+          media_playback_status: String.t() | nil,
+          driver_temp_setting: float() | nil,
+          passenger_temp_setting: float() | nil,
+          charge_port_color: String.t() | nil,
+          conn_charge_cable: String.t() | nil,
+          scheduled_charging_mode: String.t() | nil,
+          scheduled_charging_pending: boolean() | nil,
+          cabin_overheat_protection: String.t() | nil,
+          cabin_overheat_protection_actively_cooling: boolean() | nil,
           service_mode: boolean() | nil,
           sun_roof_state: String.t() | nil,
           sun_roof_installed: boolean() | nil,
@@ -94,10 +112,17 @@ defmodule TeslaMate.Vehicles.Vehicle.Summary do
     charger_actual_current charger_voltage version update_available update_version update_status is_user_present geofence
     model trim_badging exterior_color wheel_type spoiler_type trunk_open frunk_open elevation power
     charge_current_request charge_current_request_max tpms_pressure_fl tpms_pressure_fr tpms_pressure_rl tpms_pressure_rr
-    tpms_soft_warning_fl tpms_soft_warning_fr tpms_soft_warning_rl tpms_soft_warning_rr climate_keeper_mode
+    tpms_soft_warning_fl tpms_soft_warning_fr tpms_soft_warning_rl tpms_soft_warning_rr
+    tpms_last_seen_pressure_time_fl tpms_last_seen_pressure_time_fr tpms_last_seen_pressure_time_rl tpms_last_seen_pressure_time_rr
+    climate_keeper_mode
     active_route_destination active_route_latitude active_route_longitude active_route_energy_at_arrival
     active_route_miles_to_arrival active_route_minutes_to_arrival active_route_traffic_minutes_delay
-    center_display_state service_mode sun_roof_state sun_roof_installed sun_roof_percent_open download_perc install_perc
+    center_display_state
+    driver_assist exterior_trim performance_package battery_heater now_playing_title media_playback_status
+    driver_temp_setting passenger_temp_setting
+    charge_port_color conn_charge_cable scheduled_charging_mode scheduled_charging_pending
+    cabin_overheat_protection cabin_overheat_protection_actively_cooling
+    service_mode sun_roof_state sun_roof_installed sun_roof_percent_open download_perc install_perc
   )a
 
   def into(nil, %{state: :start, healthy?: healthy?, car: car}) do
@@ -235,7 +260,31 @@ defmodule TeslaMate.Vehicles.Vehicle.Summary do
       tpms_soft_warning_fr: get_in_struct(vehicle, [:vehicle_state, :tpms_soft_warning_fr]),
       tpms_soft_warning_rl: get_in_struct(vehicle, [:vehicle_state, :tpms_soft_warning_rl]),
       tpms_soft_warning_rr: get_in_struct(vehicle, [:vehicle_state, :tpms_soft_warning_rr]),
+      tpms_last_seen_pressure_time_fl: get_in_struct(vehicle, [:vehicle_state, :tpms_last_seen_pressure_time_fl]),
+      tpms_last_seen_pressure_time_fr: get_in_struct(vehicle, [:vehicle_state, :tpms_last_seen_pressure_time_fr]),
+      tpms_last_seen_pressure_time_rl: get_in_struct(vehicle, [:vehicle_state, :tpms_last_seen_pressure_time_rl]),
+      tpms_last_seen_pressure_time_rr: get_in_struct(vehicle, [:vehicle_state, :tpms_last_seen_pressure_time_rr]),
       center_display_state: get_in_struct(vehicle, [:vehicle_state, :center_display_state]),
+      now_playing_title: get_in_struct(vehicle, [:vehicle_state, :now_playing_title]),
+      media_playback_status: get_in_struct(vehicle, [:vehicle_state, :media_playback_status]),
+
+      # Climate State (additional)
+      battery_heater: get_in_struct(vehicle, [:climate_state, :battery_heater]),
+      driver_temp_setting: get_in_struct(vehicle, [:climate_state, :driver_temp_setting]),
+      passenger_temp_setting: get_in_struct(vehicle, [:climate_state, :passenger_temp_setting]),
+      cabin_overheat_protection: get_in_struct(vehicle, [:climate_state, :cabin_overheat_protection]),
+      cabin_overheat_protection_actively_cooling: get_in_struct(vehicle, [:climate_state, :cabin_overheat_protection_actively_cooling]),
+
+      # Charge State (additional)
+      charge_port_color: charge(vehicle, :charge_port_color),
+      conn_charge_cable: charge(vehicle, :conn_charge_cable),
+      scheduled_charging_mode: charge(vehicle, :scheduled_charging_mode),
+      scheduled_charging_pending: charge(vehicle, :scheduled_charging_pending),
+
+      # Vehicle Config
+      driver_assist: get_in_struct(vehicle, [:vehicle_config, :driver_assist]),
+      exterior_trim: get_in_struct(vehicle, [:vehicle_config, :exterior_trim]),
+      performance_package: get_in_struct(vehicle, [:vehicle_config, :performance_package]),
       sun_roof_state: get_in_struct(vehicle, [:vehicle_state, :sun_roof_state]),
       sun_roof_installed: sun_roof_installed(vehicle),
       sun_roof_percent_open: get_in_struct(vehicle, [:vehicle_state, :sun_roof_percent_open])

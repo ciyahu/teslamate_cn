@@ -235,8 +235,10 @@ defmodule TeslaMateWeb.SettingsLive.Index do
   end
 
   defp prepare(settings) do
-    Enum.map(settings, fn %CarSettings{car: car} = s ->
-      {car.id, %{original: s, changeset: Settings.change_car_settings(s)}}
+    Enum.flat_map(settings, fn
+      %CarSettings{car: nil} -> []
+      %CarSettings{car: car} = s ->
+        [{car.id, %{original: s, changeset: Settings.change_car_settings(s)}}]
     end)
   end
 end
