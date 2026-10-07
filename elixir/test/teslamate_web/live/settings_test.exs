@@ -13,7 +13,10 @@ defmodule TeslaMateWeb.SettingsLiveTest do
     view |> element("#show-release-notes") |> render_click()
     assert has_element?(view, "#release-notes-modal.is-active")
     assert has_element?(view, "#release-notes-dialog[role=dialog]", "TeslaMate v4.3.0")
-    assert has_element?(view, "#release-notes-dialog", "本版本保留原有中文 Grafana")
+    assert has_element?(view, "#release-notes-dialog", "车辆记录与稳定性")
+    refute has_element?(view, "#release-notes-dialog", "重新接入")
+    refute has_element?(view, "#release-notes-dialog", "本版本保留的定制")
+    refute has_element?(view, "#release-notes-dialog", "Grafana 与内部调整")
 
     view |> element("#close-release-notes") |> render_click()
     refute has_element?(view, "#release-notes-dialog")
