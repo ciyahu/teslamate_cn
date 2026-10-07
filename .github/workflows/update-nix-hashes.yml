@@ -27,9 +27,6 @@ env:
   PATCH_NAME: nix-hashes.patch
 
 jobs:
-  check_paths:
-    uses: ./.github/workflows/check_paths.yml
-
   # Runs for every pull request that touches the dependencies, so a stale hash
   # becomes visible wherever it appears, not just where it is repaired
   # automatically. Refreshing the hashes means building those dependencies and
@@ -39,10 +36,6 @@ jobs:
   # Pushing that change back is left to the commit job below.
   compute:
     name: Compute updated hashes
-    needs: check_paths
-    # Pull requests that touch .github are not run automatically anywhere in
-    # this repository. Those are what the manual trigger is for.
-    if: needs.check_paths.outputs.githubfolder == 'false' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
 
@@ -56,8 +49,13 @@ jobs:
       - name: Checkout the pull request commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
           persist-credentials: false
+
+      - name: Show hash source
+        run: |
+          echo "Checking ref: $GITHUB_REF"
+          git rev-parse --short HEAD
 
       - name: Install Nix
         uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
@@ -169,7 +167,7 @@ jobs:
       - name: Checkout the Dependabot commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
           persist-credentials: false
 
       - name: Download the patch
