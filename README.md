@@ -1,5 +1,9 @@
 # TeslaMate
 
+来源：https://github.com/teslamate-org/teslamate
+
+本 fork 增加了高德地图和腾讯地图切换，Grafana 汉化及国内地图源适配，需配合 wemate 相关服务使用。
+
 [![License](https://img.shields.io/badge/license-AGPL--3.0--or--later-green.svg)](https://github.com/teslamate-org/teslamate/blob/main/NOTICE)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10859/badge)](https://www.bestpractices.dev/projects/10859)
 [![CI](https://github.com/teslamate-org/teslamate/actions/workflows/devops.yml/badge.svg)](https://github.com/teslamate-org/teslamate/actions/workflows/devops.yml)

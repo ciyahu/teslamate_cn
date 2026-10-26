@@ -5,6 +5,43 @@
   </ul>
 </nav>
 
+<.form
+  :let={f}
+  for={@global_settings.changeset}
+  id="map_settings"
+  as={:global_settings}
+  phx-change="change"
+>
+  <div class="columns is-mobile is-centered">
+    <div class="column">
+      <h2 class="title is-4">地图</h2>
+      <div class="field is-horizontal center-vertically">
+        <div class="field-label is-normal">
+          <%= label(f, :tencent_map_enabled, "地图", class: "label") %>
+        </div>
+        <div class="field-body">
+          <div class="field">
+            <div class="control">
+              <div class="select is-fullwidth">
+                <%= select(
+                  f,
+                  :tencent_map_enabled,
+                  [
+                    {"腾讯地图", true},
+                    {"高德地图", false}
+                  ],
+                  id: "global_settings_tencent_map_enabled"
+                ) %>
+              </div>
+            </div>
+            <p class="help is-danger"><%= error_tag(f, :tencent_map_enabled) %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</.form>
+
 <%= if Enum.count(@car_settings) > 0 do %>
   <%= if Enum.count(@car_settings) > 1 do %>
     <div class="tabs is-centered is-boxed">
@@ -458,7 +495,16 @@
         <tr>
           <th align="right">{gettext("Version")}</th>
           <td>
-            {TeslaMate.Version.version()}<strong>{if @update do
+            {TeslaMate.Version.version()}
+            <button
+              id="show-release-notes"
+              type="button"
+              class="button is-text is-small ml-2"
+              phx-click="show_release_notes"
+              aria-haspopup="dialog"
+              aria-controls="release-notes-modal"
+            >更新说明</button>
+            <strong>{if @update do
               vsn =
                 link(@update,
                   to: "https://github.com/teslamate-org/teslamate/releases",
@@ -504,3 +550,62 @@
     </div>
   </div>
 <% end %>
+
+<div
+  id="release-notes-modal"
+  class={["modal modal-fade-scale", if(@show_release_notes, do: "is-active")]}
+  phx-hook="Modal"
+>
+  <div class="modal-background" phx-click="close_release_notes" aria-hidden="true"></div>
+  <.focus_wrap
+    :if={@show_release_notes}
+    id="release-notes-dialog"
+    class="modal-card"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="release-notes-title"
+    phx-window-keydown="close_release_notes"
+    phx-key="Escape"
+  >
+    <header class="modal-card-head">
+      <h2 id="release-notes-title" class="modal-card-title is-size-5">更新说明</h2>
+      <button
+        id="close-release-notes"
+        type="button"
+        class="button is-text is-small"
+        aria-label="关闭更新说明"
+        phx-click="close_release_notes"
+      ><span class="icon"><i class="mdi mdi-close" aria-hidden="true"></i></span></button>
+    </header>
+    <section class="modal-card-body release-notes-body">
+      <h3 class="is-size-5">TeslaMate v4.4.0</h3>
+
+      <h4 class="is-size-6">车辆记录与稳定性</h4>
+      <ul>
+        <li>车辆摘要和 MQTT 按时间采用实时推送与定时查询中的较新数据，避免旧数据覆盖新状态。</li>
+        <li>修复行驶中里程倒退和 Home Assistant 提示数值不是严格递增的问题。</li>
+      </ul>
+
+      <h4 class="is-size-6">地理围栏与页面</h4>
+      <ul>
+        <li>修复围栏距离计算，按实际距离匹配行程和充电记录。</li>
+        <li>仅修改围栏名称或电价时不再重新匹配历史记录，减少大数据库保存超时。</li>
+        <li>提前连接地图服务；手机底部避开系统手势区域，修复页面过度滚动。</li>
+        <li>未命名车辆统一显示 VIN，并修复缓存构建后显示旧版本号的问题。</li>
+      </ul>
+
+      <h4 class="is-size-6">MQTT 与 Home Assistant</h4>
+      <ul>
+        <li>车辆明确返回空值时，对应主题发布空内容，网页同步清空，不再保留过期数值。</li>
+        <li>启动后尚未收到的字段不主动清空原有保留值；运行期间里程不降低，也不发布为空。</li>
+      </ul>
+
+      <h4 class="is-size-6">安全与运行环境</h4>
+      <ul>
+        <li>不再信任存在私钥安全问题的 eMudhra 中间证书，保护 Tesla 流式接口与 MQTT 连接。</li>
+        <li>镜像补齐 CA 证书，恢复时区数据的安全下载更新。</li>
+      </ul>
+
+    </section>
+  </.focus_wrap>
+</div>

@@ -15,6 +15,8 @@ defmodule TeslaMate.Settings.GlobalSettings do
     field :language, :string
     field :theme_mode, Ecto.Enum, values: [:light, :system, :dark], default: :system
 
+    field :tencent_map_enabled, :boolean, default: false
+
     timestamps()
   end
 
@@ -93,7 +95,8 @@ defmodule TeslaMate.Settings.GlobalSettings do
       :base_url,
       :grafana_url,
       :language,
-      :theme_mode
+      :theme_mode,
+      :tencent_map_enabled
     ])
     |> validate_required([
       :unit_of_length,

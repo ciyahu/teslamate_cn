@@ -55,6 +55,58 @@
         document.documentElement.setAttribute('data-theme', actualTheme);
       })();
     </script>
+    <script>
+      window.TENCENT_MAP_ENABLED = <%= !!(@conn.assigns.settings.tencent_map_enabled) %>;
+
+      if (window.TENCENT_MAP_ENABLED) {
+        (function() {
+          const authErrorTexts = [
+            "鉴权失败，请传入正确的key",
+            "当前产品鉴权失败，请检查KEY及相关信息是否准确。"
+          ];
+
+          const hideTencentMapAuthError = function(root) {
+            if (!root || !root.querySelectorAll) return;
+
+            const candidates = root.matches && root.matches("div") ? [root] : [];
+            candidates.push.apply(candidates, Array.from(root.querySelectorAll("div")));
+
+            candidates.forEach(function(node) {
+              if (!authErrorTexts.includes(node.textContent.trim())) return;
+              if (Array.from(node.children).some(function(child) {
+                return authErrorTexts.includes(child.textContent.trim());
+              })) return;
+
+              node.style.display = "none";
+              node.setAttribute("aria-hidden", "true");
+            });
+          };
+
+          const start = function() {
+            hideTencentMapAuthError(document.body);
+
+            new MutationObserver(function(mutations) {
+              mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                  if (node.nodeType === Node.ELEMENT_NODE) {
+                    hideTencentMapAuthError(node);
+                  }
+                });
+              });
+            }).observe(document.body, { childList: true, subtree: true });
+          };
+
+          if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", start, { once: true });
+          } else {
+            start();
+          }
+        })();
+      }
+    </script>
+    <%= if @conn.assigns.settings.tencent_map_enabled do %>
+      <script src="https://map.qq.com/api/gljs?v=1.exp&key="></script>
+    <% end %>
     <script
       defer
       phx-track-static
@@ -90,23 +142,11 @@
         <div id="navbar" class="navbar-menu">
           <div class="navbar-end">
             <%= if grafana_url = @conn.assigns.settings.grafana_url do %>
-              <div class="navbar-item has-dropdown is-hoverable">
-                <a class="navbar-link is-arrowless">
-                  <span class="icon"><i class="mdi mdi-view-dashboard"></i></span>&nbsp;<span>{gettext(
-                    "Dashboards"
-                  )}</span>
-                </a>
-                <div class="navbar-dropdown is-boxed">
-                  <%= for %{"title" => title, "uid" => uid} <- list_dashboards() do %>
-                    {link(title,
-                      to: "#{grafana_url}/d/#{uid}",
-                      class: "navbar-item",
-                      data_uid: uid,
-                      target: "_blank"
-                    )}
-                  <% end %>
-                </div>
-              </div>
+              <a class="navbar-item" href={grafana_url} target="_blank">
+                <span class="icon"><i class="mdi mdi-view-dashboard"></i></span>&nbsp;<span>{gettext(
+                  "Dashboards"
+                )}</span>
+              </a>
             <% end %>
             <.link
               navigate={Routes.live_path(@conn, TeslaMateWeb.GeoFenceLive.Index)}

@@ -13,12 +13,12 @@ defmodule TeslaMateWeb.ChargeLive.Cost do
   on_mount {TeslaMateWeb.InitAssigns, :locale}
 
   @impl true
-  def mount(%{"id" => id}, _session, socket) do
+  def mount(%{"id" => id}, %{"settings" => settings}, socket) do
     charging_process = Log.get_charging_process!(id)
 
     socket =
       socket
-      |> assign(notification: nil, page_title: gettext("Charge Cost"))
+      |> assign(notification: nil, page_title: gettext("Charge Cost"), settings: settings)
       |> assign_charging_process(charging_process)
 
     {:ok, socket}

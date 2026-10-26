@@ -5,6 +5,31 @@ defmodule TeslaMateWeb.SettingsLiveTest do
 
   import TestHelper, only: [decimal: 1]
 
+  test "opens release notes beside the version and closes the dialog", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/settings")
+    refute has_element?(view, "#release-notes-modal.is-active")
+    assert has_element?(view, ".about #show-release-notes", "更新说明")
+
+    view |> element("#show-release-notes") |> render_click()
+    assert has_element?(view, "#release-notes-modal.is-active")
+    assert has_element?(view, "#release-notes-dialog[role=dialog]", "TeslaMate v4.4.0")
+    assert has_element?(view, "#release-notes-dialog", "车辆记录与稳定性")
+    refute has_element?(view, "#release-notes-dialog", "重新接入")
+    refute has_element?(view, "#release-notes-dialog", "本版本保留的定制")
+    refute has_element?(view, "#release-notes-dialog", "Grafana 与内部调整")
+
+    view |> element("#close-release-notes") |> render_click()
+    refute has_element?(view, "#release-notes-dialog")
+
+    view |> element("#show-release-notes") |> render_click()
+    view |> element("#release-notes-modal .modal-background") |> render_click()
+    refute has_element?(view, "#release-notes-modal.is-active")
+
+    view |> element("#show-release-notes") |> render_click()
+    render_keydown(view, "close_release_notes", %{"key" => "Escape"})
+    refute has_element?(view, "#release-notes-dialog")
+  end
+
   describe "units" do
     test "unit of length: shows 'km' by default", %{conn: conn} do
       assert {:ok, view, html} = live(conn, "/settings")
@@ -95,6 +120,36 @@ defmodule TeslaMateWeb.SettingsLiveTest do
   end
 
   describe "global settings" do
+    test "changes map provider", %{conn: conn} do
+      TeslaMate.Repo.query!("UPDATE settings SET tencent_map_key = $1", ["legacy-key"])
+      assert {:ok, view, html} = live(conn, "/settings")
+
+      assert [
+               {"option", [{"value", "true"}], ["腾讯地图"]},
+               {"option", [{"selected", ""}, {"value", "false"}], ["高德地图"]}
+             ] =
+               html
+               |> Floki.parse_document!()
+               |> Floki.find("#global_settings_tencent_map_enabled option")
+
+      assert [] =
+               html
+               |> Floki.parse_document!()
+               |> Floki.find("#global_settings_tencent_map_key")
+
+      assert [
+               {"option", [{"selected", ""}, {"value", "true"}], ["腾讯地图"]},
+               {"option", [{"value", "false"}], ["高德地图"]}
+             ] =
+               render_change(view, :change, %{global_settings: %{tencent_map_enabled: true}})
+               |> Floki.parse_document!()
+               |> Floki.find("#global_settings_tencent_map_enabled option")
+
+      assert Settings.get_global_settings!().tencent_map_enabled == true
+      assert %{rows: [["legacy-key"]]} =
+               TeslaMate.Repo.query!("SELECT tencent_map_key FROM settings")
+    end
+
     test "shows :rated by default", %{conn: conn} do
       assert {:ok, _view, html} = live(conn, "/settings")
 
@@ -614,10 +669,11 @@ defmodule TeslaMateWeb.SettingsLiveTest do
         assert {:ok, _view, html} = live(conn, "/settings")
         html = Floki.parse_document!(html)
 
-        assert "#{TeslaMate.Version.version()} (Update available: 1.1.3)" ==
+        assert "#{TeslaMate.Version.version()} 更新说明 (Update available: 1.1.3)" ==
                  html
                  |> Floki.find(".about tr:first-child td")
                  |> Floki.text()
+                 |> String.replace(~r/\s+/, " ")
                  |> String.trim()
 
         assert [

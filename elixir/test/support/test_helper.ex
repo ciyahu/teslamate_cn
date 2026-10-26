@@ -9,10 +9,12 @@ defmodule TestHelper do
     assert [tile_layer] =
              document |> Floki.find("[data-tile-layer]") |> Floki.attribute("data-tile-layer")
 
-    assert %{"url" => url, "options" => %{}} = Jason.decode!(tile_layer)
-    %URI{scheme: scheme, host: host} = URI.parse(url)
+    assert %{"url" => url, "options" => %{"subdomains" => subdomains}} = Jason.decode!(tile_layer)
 
-    assert [_] = Floki.find(document, ~s(link[rel=preconnect][href="#{scheme}://#{host}"]))
+    for subdomain <- subdomains do
+      %URI{scheme: scheme, host: host} = URI.parse(String.replace(url, "{s}", subdomain))
+      assert [_] = Floki.find(document, ~s(link[rel=preconnect][href="#{scheme}://#{host}"]))
+    end
   end
 
   def eventually(fun, opts \\ []) do
