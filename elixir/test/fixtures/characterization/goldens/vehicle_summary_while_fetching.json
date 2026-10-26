@@ -73,31 +73,45 @@
           "active_route_miles_to_arrival",
           "active_route_minutes_to_arrival",
           "active_route_traffic_minutes_delay",
+          "battery_heater",
+          "cabin_overheat_protection",
+          "cabin_overheat_protection_actively_cooling",
           "center_display_state",
           "charge_current_request",
           "charge_current_request_max",
           "charge_energy_added",
           "charge_limit_soc",
+          "charge_port_color",
           "charge_port_door_open",
           "charger_actual_current",
           "charger_phases",
           "charger_power",
           "charger_voltage",
           "climate_keeper_mode",
+          "conn_charge_cable",
           "doors_open",
           "download_perc",
+          "driver_assist",
           "driver_front_door_open",
           "driver_front_window_open",
           "driver_rear_door_open",
           "driver_rear_window_open",
+          "driver_temp_setting",
+          "exterior_trim",
           "frunk_open",
           "geofence",
           "install_perc",
           "is_preconditioning",
+          "media_playback_status",
+          "now_playing_title",
           "passenger_front_door_open",
           "passenger_front_window_open",
           "passenger_rear_door_open",
           "passenger_rear_window_open",
+          "passenger_temp_setting",
+          "performance_package",
+          "scheduled_charging_mode",
+          "scheduled_charging_pending",
           "scheduled_charging_start_time",
           "service_mode",
           "shift_state",
@@ -106,6 +120,10 @@
           "sun_roof_percent_open",
           "sun_roof_state",
           "time_to_full_charge",
+          "tpms_last_seen_pressure_time_fl",
+          "tpms_last_seen_pressure_time_fr",
+          "tpms_last_seen_pressure_time_rl",
+          "tpms_last_seen_pressure_time_rr",
           "tpms_pressure_fl",
           "tpms_pressure_fr",
           "tpms_pressure_rl",
@@ -424,6 +442,62 @@
     "teslamate/cars/$car/usable_battery_level": ["79"],
     "teslamate/cars/$car/version": ["2026.20.1"],
     "teslamate/cars/$car/wheel_type": ["Pinwheel18"],
-    "teslamate/cars/$car/windows_open": [""]
+    "teslamate/cars/$car/windows_open": [
+      ""
+    ],
+    "teslamate/cars/$car/battery_heater": [
+      ""
+    ],
+    "teslamate/cars/$car/cabin_overheat_protection": [
+      ""
+    ],
+    "teslamate/cars/$car/cabin_overheat_protection_actively_cooling": [
+      ""
+    ],
+    "teslamate/cars/$car/charge_port_color": [
+      ""
+    ],
+    "teslamate/cars/$car/conn_charge_cable": [
+      ""
+    ],
+    "teslamate/cars/$car/driver_assist": [
+      ""
+    ],
+    "teslamate/cars/$car/driver_temp_setting": [
+      ""
+    ],
+    "teslamate/cars/$car/exterior_trim": [
+      ""
+    ],
+    "teslamate/cars/$car/media_playback_status": [
+      ""
+    ],
+    "teslamate/cars/$car/now_playing_title": [
+      ""
+    ],
+    "teslamate/cars/$car/passenger_temp_setting": [
+      ""
+    ],
+    "teslamate/cars/$car/performance_package": [
+      ""
+    ],
+    "teslamate/cars/$car/scheduled_charging_mode": [
+      ""
+    ],
+    "teslamate/cars/$car/scheduled_charging_pending": [
+      ""
+    ],
+    "teslamate/cars/$car/tpms_last_seen_pressure_time_fl": [
+      ""
+    ],
+    "teslamate/cars/$car/tpms_last_seen_pressure_time_fr": [
+      ""
+    ],
+    "teslamate/cars/$car/tpms_last_seen_pressure_time_rl": [
+      ""
+    ],
+    "teslamate/cars/$car/tpms_last_seen_pressure_time_rr": [
+      ""
+    ]
   }
 }
