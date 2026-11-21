@@ -239,6 +239,7 @@ defmodule TeslaMateWeb.SettingsLiveTest do
     end
 
     test "keeps other settings changed while the language changes", %{conn: conn} do
+      Repo.query!("UPDATE settings SET tencent_map_key = $1", ["legacy-key"])
       # holds the language change back until the other change is saved
       test = self()
 
@@ -255,7 +256,9 @@ defmodule TeslaMateWeb.SettingsLiveTest do
       assert {:ok, view, _html} = live(conn, "/settings")
 
       render_change(view, :change, %{global_settings: %{language: "de"}})
-      render_change(view, :change, %{global_settings: %{unit_of_length: "mi"}})
+      render_change(view, :change, %{
+        global_settings: %{unit_of_length: "mi", tencent_map_enabled: true}
+      })
 
       send(running.pid, :done)
       assert :ok = Task.await(running)
@@ -272,7 +275,15 @@ defmodule TeslaMateWeb.SettingsLiveTest do
                |> Floki.parse_document!()
                |> Floki.find("#global_settings_unit_of_length option[selected]")
 
-      assert %Settings.GlobalSettings{language: "de", unit_of_length: :mi} =
+      assert [{"option", [{"selected", ""}, {"value", "true"}], ["腾讯地图"]}] =
+               html
+               |> Floki.parse_document!()
+               |> Floki.find("#global_settings_tencent_map_enabled option[selected]")
+
+      assert %{rows: [["legacy-key"]]} =
+               Repo.query!("SELECT tencent_map_key FROM settings")
+
+      assert %Settings.GlobalSettings{language: "de", unit_of_length: :mi, tencent_map_enabled: true} =
                Settings.get_global_settings!()
     end
 

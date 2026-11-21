@@ -590,6 +590,7 @@ defmodule TeslaMate.Mqtt.PubSub.VehicleSubscriberTest do
     assert_receive {VehiclesMock, {:subscribe_to_summary, 0}}
 
     send(pid, %Summary{
+      car: %Car{vin: "5YJ3E1EA1KF000001"},
       driver_assist: "TeslaAP4",
       now_playing_title: "Test track",
       charge_port_color: "Green",
@@ -598,6 +599,7 @@ defmodule TeslaMate.Mqtt.PubSub.VehicleSubscriberTest do
     })
 
     for {key, value} <- [
+          {"vin", "5YJ3E1EA1KF000001"},
           {"driver_assist", "TeslaAP4"},
           {"now_playing_title", "Test track"},
           {"charge_port_color", "Green"},

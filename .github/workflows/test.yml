@@ -59,23 +59,8 @@ jobs:
         run: mix compile --warnings-as-errors
 
       - name: Run tests
-        id: tests
         working-directory: elixir
         run: mix test --warnings-as-errors
-
-      - name: Capture replay differences for upgrade review
-        if: failure() && steps.tests.outcome == 'failure'
-        working-directory: elixir
-        env:
-          CHARACTERIZATION_RECORD: all
-        run: mix test test/teslamate/characterization_test.exs --warnings-as-errors
-
-      - name: Upload replay review fixtures
-        if: failure() && steps.tests.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: replay-review
-          path: elixir/test/fixtures/characterization
 
       - name: Setup Node
         uses: actions/setup-node@v4
