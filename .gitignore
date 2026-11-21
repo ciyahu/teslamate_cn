@@ -75,3 +75,11 @@ config/*.env
 
 # Codegraph
 .codegraph/
+
+# Local tools and pre-migration build artifacts.
+.claude/
+change.md
+tile_test.html
+map_compare.html
+UPGRADE_NOTES.md
+/assets/node_modules/

@@ -28,12 +28,12 @@
     <div class="field-body">
       <div class="field">
         <div class="control">
-          <.tile_preconnect />
+          <.tile_preconnect settings={@settings} />
           <div id="map_container" phx-update="ignore">
             <figure
               id="map"
               style="height: 400px; position: relative;"
-              data-tile-layer={tile_layer()}
+              data-tile-layer={tile_layer(@settings)}
               phx-hook="Map"
             >
             </figure>
