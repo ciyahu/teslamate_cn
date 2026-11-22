@@ -7,6 +7,10 @@ on:
         description: 'Image tag'
         required: true
         default: 'latest'
+      source_digest:
+        description: 'Existing ciyahu/grafana digest to promote to latest without rebuilding'
+        required: false
+        type: string
 
 jobs:
   build-and-push:
@@ -35,6 +39,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push
+        if: inputs.source_digest == ''
         uses: docker/build-push-action@v6
         with:
           context: grafana
@@ -44,3 +49,12 @@ jobs:
           tags: ciyahu/grafana:${{ github.event.inputs.version_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Promote existing Grafana image
+        if: inputs.source_digest != ''
+        env:
+          DIGEST: ${{ inputs.source_digest }}
+          TAG: ${{ inputs.version_tag }}
+        run: |
+          [[ "$TAG" == latest && "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] || exit 1
+          docker buildx imagetools create -t ciyahu/grafana:latest "ciyahu/grafana@$DIGEST"
